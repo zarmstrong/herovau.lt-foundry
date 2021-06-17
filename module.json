@@ -1,5 +1,5 @@
 {
-  "name": "herovault-foundry",
+  "name": "herovaultfoundry",
   "title": "Hero Vault for Foundry VTT",
   "description": "This module interfaces with the herovau.lt website to easily import and export your PCs between servers. Perfect for Adventure League, Pathfinder Society, Starfinder Society and other organized play systems.",
   "author": "slate",
