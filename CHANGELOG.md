@@ -1,4 +1,8 @@
-## 0.1.0 (Jun 16, 2021)
+## 0.1.3 (Jun 16, 2021)
+
+* fixing for release
+
+## 0.1.2 (Jun 16, 2021)
 
 * minified
 
