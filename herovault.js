@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer="0.1.0";
+const hvVer="0.1.2";
 
 const hvColor1='color: #7bf542';  //bright green
 const hvColor2='color: #d8eb34'; //yellow green
@@ -447,7 +447,7 @@ var Cookie =
       if (days)
       {
          date = new Date();
-         date.setTime(date.getTime()+(days*24*60*60*1000));
+         date.setTime(date.getTime()+(days*24*60*60.1.20));
          expires = "; expires="+date.toGMTString();
       }
       else
