@@ -1,4 +1,9 @@
-## 0.1.5 (Jun 17, 2021)
+## 0.1.7 (Jun 17, 2021)
+
+* (trying again) fixed a bug in the version updating script that broke the cookie function
+
+
+## 0.1.6 (Jun 17, 2021)
 
 * fixed a bug in the version updating script that broke the cookie function
 
