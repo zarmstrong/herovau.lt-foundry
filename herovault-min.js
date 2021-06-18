@@ -4,94 +4,51 @@ console.log("%cHeroVau.lt/Foundry Bridge | %cCan user modify: "+actor.canUserMod
 console.log("%cHeroVau.lt/Foundry Bridge | %cActor type: "+actor.data.type+"can update?: "+actor.can(game.user,"update"),hvColor1,hvColor4);}
 if(!actor.data.type==="character")return;if(v8==1){if(actor.canUserModify(game.user,"update")==false)return;}
 else{if(!(actor.data.type==="character"&&actor.can(game.user,"update")))return;}
-let element=html.find(".window-header .window-title");if(element.length!=1)return;let vaultButton=$(`<a class="popout"><i class="fas fa-cloud"></i>Vault</a>`);vaultButton.on('click',()=>beginVaultConnection(obj.object));element.after(vaultButton);});function renderVault(){let applyChanges=false;let defaulttoken=Cookie.get('herovault_user_token');if(defaulttoken==null)
+let element=html.find(".window-header .window-title");if(element.length!=1)return;let vaultButton=$(`<a class="popout"><i class="fas fa-cloud"></i>Vault</a>`);vaultButton.on('click',()=>beginVaultConnection(obj.object));element.after(vaultButton);});function beginVaultConnection(targetActor,userToken){let applyChanges=false;let defaulttoken=Cookie.get('herovault_user_token');let skipTokenCookie=Cookie.get('herovault_skiptoken');if(skipTokenCookie){loadPersonalVault(targetActor,defaulttoken);}else{if(defaulttoken==null)
 defaulttoken="";new Dialog({title:`HeroVau.lt Import`,content:`
-      
-      <div>
-        <p>Enter your User Token from HeroVau.lt. You can find it on the My Account page.</p>
-      <div>
-      <hr/>
-      <div id="divCode">
-        <div id="divOuter">
-          <div id="divInner">
-            <input id="textBoxUserToken" type="text" maxlength="124" value="${defaulttoken}"/>
+        <div>
+          <p>Enter your User Token from HeroVau.lt. You can find it on the <a href="https://herovau.lt/?action=myaccount">My Account</a> page on http://herovau.lt</p>
+        <div>
+        <hr/>
+        <div id="divCode">
+          <div id="divOuter">
+            <div id="divInner">
+              <input id="textBoxUserToken" type="text" maxlength="124" value="${defaulttoken}"/>
+            </div>
           </div>
         </div>
-      </div>
-      <br/>
-      <style>
-      
-        #textBoxElementID {
-            border: 0px;
-            padding-left: 2px;
-            letter-spacing: 1px;
-            width: 330px;
-            min-width: 330px;
-          }
-          
-          #divInner{
-            left: 0;
-            position: sticky;
-          }
-          
-          #divOuter{
-            width: 285px; 
-            overflow: hidden;
-          }
-  
-          #divCode{  
-            border: 1px solid black;
-            width: 300px;
-            margin: 0 auto;
-            padding: 5px;
-          }
-  
-      </style>
-      `,buttons:{yes:{icon:"<i class='fas fa-check'></i>",label:`Load Vault`,callback:()=>applyChanges=true},no:{icon:"<i class='fas fa-times'></i>",label:`Cancel`},},default:"yes",close:html=>{if(applyChanges){let userToken=html.find('[id="textBoxUserToken"]')[0].value;Cookie.set('herovault_user_token',userToken,365);loadPersonalVault(targetActor,userToken);}}}).render(true);}
-function beginVaultConnection(targetActor,userToken){let applyChanges=false;let defaulttoken=Cookie.get('herovault_user_token');if(defaulttoken==null)
-defaulttoken="";new Dialog({title:`HeroVau.lt Import`,content:`
-      
-      <div>
-        <p>Enter your User Token from HeroVau.lt. You can find it on the My Account page.</p>
-      <div>
-      <hr/>
-      <div id="divCode">
-        <div id="divOuter">
-          <div id="divInner">
-            <input id="textBoxUserToken" type="text" maxlength="124" value="${defaulttoken}"/>
+        <div id="">
+          <div id="divOuter">
+            <div id="divInner">
+              <input type="checkbox" id="skipToken" name="skipToken" value="true"><label for="skipToken"> Skip this screen in the future.</label>
+            </div>
           </div>
         </div>
-      </div>
-      <br/>
-      <style>
-      
-        #textBoxElementID {
-            border: 0px;
-            padding-left: 2px;
-            letter-spacing: 1px;
-            width: 330px;
-            min-width: 330px;
-          }
-          
-          #divInner{
-            left: 0;
-            position: sticky;
-          }
-          
-          #divOuter{
-            width: 285px; 
-            overflow: hidden;
-          }
-  
-          #divCode{  
-            border: 1px solid black;
-            width: 300px;
-            margin: 0 auto;
-            padding: 5px;
-          }
-  
-      </style>
-      `,buttons:{yes:{icon:"<i class='fas fa-check'></i>",label:`Load Vault`,callback:()=>applyChanges=true},no:{icon:"<i class='fas fa-times'></i>",label:`Cancel`},},default:"yes",close:html=>{if(applyChanges){let userToken=html.find('[id="textBoxUserToken"]')[0].value;Cookie.set('herovault_user_token',userToken,365);loadPersonalVault(targetActor,userToken);}}}).render(true);}
+        <br/>
+        <style>
+          #textBoxElementID {
+              border: 0px;
+              padding-left: 2px;
+              letter-spacing: 1px;
+              width: 330px;
+              min-width: 330px;
+            }
+            #divInner{
+              left: 0;
+              position: sticky;
+            }
+            #divOuter{
+              width: 285px; 
+              overflow: hidden;
+            }
+            #divCode{  
+              border: 1px solid black;
+              width: 300px;
+              margin: 0 auto;
+              padding: 5px;
+            }
+        </style>`,buttons:{yes:{icon:"<i class='fas fa-check'></i>",label:`Load Vault`,callback:()=>applyChanges=true},no:{icon:"<i class='fas fa-times'></i>",label:`Cancel`},},default:"yes",close:html=>{if(applyChanges){let userToken=html.find('[id="textBoxUserToken"]')[0].value;let skipToken=html.find('[id="skipToken"]')[0].checked;Cookie.set('herovault_user_token',userToken,365);if(skipToken)
+Cookie.set('herovault_skiptoken',skipToken,30);loadPersonalVault(targetActor,userToken);}}}).render(true);}}
 function loadPersonalVault(targetActor,userToken){const gameSystem=game.data.system.id;let error=false;var xmlhttp=new XMLHttpRequest();xmlhttp.onreadystatechange=function(){if(this.readyState==4&&this.status==200){let responseJSON=JSON.parse(this.responseText);if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %c"+responseJSON,hvColor1,hvColor4);if(responseJSON.hasOwnProperty("error")){if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %cerror found in response",hvColor1,hvColor4);error=true;}
@@ -103,7 +60,7 @@ console.log("%cHeroVau.lt/Foundry Bridge | %c"+Object.keys(responseJSON).length,
                     <p>${responseJSON.error}<p>
                  </div><br>`,buttons:{yes:{icon:"<i class='fas fa-check'></i>",label:`Ok`}},default:"yes"}).render(true);}
 else{if(Object.keys(responseJSON).length>=1){if(hvDebug)
-console.log("%cHeroVau.lt/Foundry Bridge | %cCalling checkHLOCharacterIsCorrect",hvColor1,hvColor4);createPCTable(targetActor,responseJSON);}else{ui.notifications.warn("Unable load vault.  Please double-check your User Token.");return;}}}};console.log("%cHeroVau.lt/Foundry Bridge | %cusertoken: "+userToken,hvColor1,hvColor4);xmlhttp.open("GET","https://www.herovau.lt/foundrymodule.php?action=getvault&gamesystem="+encodeURIComponent(gameSystem)+"&hvVer="+hvVer+"&userToken="+encodeURIComponent(userToken),true);xmlhttp.send();}
+console.log("%cHeroVau.lt/Foundry Bridge | %cCalling checkHLOCharacterIsCorrect",hvColor1,hvColor4);createPCTable(targetActor,responseJSON);}else{ui.notifications.warn("Unable load vault.  Please double-check your User Token.");Cookie.set('herovault_skiptoken',"",-1);return;}}}};console.log("%cHeroVau.lt/Foundry Bridge | %cusertoken: "+userToken,hvColor1,hvColor4);xmlhttp.open("GET","https://www.herovau.lt/foundrymodule.php?action=getvault&gamesystem="+encodeURIComponent(gameSystem)+"&hvVer="+hvVer+"&userToken="+encodeURIComponent(userToken),true);xmlhttp.send();}
 function createPCTable(targetActor,responseJSON){if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %cin createPCTable",hvColor1,hvColor4);var htmlOut="<strong>Select a PC from the list:</strong><br><br><select name='pcid' id='pcid'>";for(var pccount=0;pccount<responseJSON.length;pccount++)
 {charName=responseJSON[pccount].charname;charRace=responseJSON[pccount].charrace;charClass=responseJSON[pccount].charclass;charLevel=responseJSON[pccount].charlevel;charuid=responseJSON[pccount].charuid;htmlOut=htmlOut+"<option value='"+charuid+"'>"+charName+": "+charRace+" "+charClass+" (Level "+charLevel+")</option>";}
