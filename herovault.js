@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer="0.1.7";
+const hvVer="0.1.8";
 
 const hvColor1='color: #7bf542';  //bright green
 const hvColor2='color: #d8eb34'; //yellow green

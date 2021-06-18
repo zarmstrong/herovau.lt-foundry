@@ -1,4 +1,4 @@
-let hvDebug=false;const hvVer="0.1.7";const hvColor1='color: #7bf542';const hvColor2='color: #d8eb34';const hvColor3='color: #ffffff';const hvColor4='color: #cccccc';const hvColor5='color: #ff0000';function isFunction(possibleFunction){return typeof(possibleFunction)===typeof(Function);}
+let hvDebug=false;const hvVer="0.1.8";const hvColor1='color: #7bf542';const hvColor2='color: #d8eb34';const hvColor3='color: #ffffff';const hvColor4='color: #cccccc';const hvColor5='color: #ff0000';function isFunction(possibleFunction){return typeof(possibleFunction)===typeof(Function);}
 Hooks.on('ready',async function(){console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);});Hooks.on('renderActorSheet',function(obj,html){const actor=obj.actor;v8=isFunction(actor.canUserModify);if(hvDebug){if(v8)
 console.log("%cHeroVau.lt/Foundry Bridge | %cCan user modify: "+actor.canUserModify(game.user,"update"),hvColor1,hvColor4);else
 console.log("%cHeroVau.lt/Foundry Bridge | %cActor type: "+actor.data.type+"can update?: "+actor.can(game.user,"update"),hvColor1,hvColor4);}
@@ -127,13 +127,28 @@ importCharacter(targetActor,responseJSON.downloadURL);}else{ui.notifications.war
 xmlhttp.open("GET","https://www.herovau.lt/foundrymodule.php?action=getCharacter&charUID="+encodeURIComponent(charUID),true);xmlhttp.send();}
 async function importCharacter(targetActor,charURL){let error=false
 var xmlhttp=new XMLHttpRequest();xmlhttp.onreadystatechange=function(){if(this.readyState==4&&this.status==200){let responseJSON=JSON.parse(this.responseText);if(hvDebug)
-console.log("%cHeroVau.lt/Foundry Bridge | %c"+responseJSON,hvColor1,hvColor4);if(error){new Dialog({title:`HeroVau.lt`,content:`
+console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);if(error){new Dialog({title:`HeroVau.lt`,content:`
                  <div>
                     <h3>Error</h3>
                     <p>${responseJSON.error}<p>
                     <p>Please contact us with this information above by going to <a href="https://herovau.lt/?action=contact">https://herovau.lt/?action=contact</a>.<p>
                  </div><br>`,buttons:{yes:{icon:"<i class='fas fa-check'></i>",label:`Ok`}},default:"yes"}).render(true);}
-else{importPCID=new RegExp(responseJSON._id,"g");targetPCID=targetActor.data._id;charDataStr=JSON.stringify(responseJSON);charDataStr=charDataStr.replace(importPCID,targetPCID);charImport=JSON.parse(charDataStr);console.log("%cHLO Importer | %c Importing "+charImport.name,hvColor1,hvColor4);targetActor.importFromJSON(JSON.stringify(charImport));}}};console.log("%cHeroVau.lt/Foundry Bridge | %cDownloading PC from: "+charURL,hvColor1,hvColor4);xmlhttp.open("GET",charURL,true);xmlhttp.send();}
+else{targetPCID=targetActor.data._id;let coreVersionMismatch=false;let systemVersionMismatch=false;let abort=false;let errMsg='';let systemVersion=game.system.data.version;let coreVersion=game.data.version;pcGameSystemVersion=responseJSON.flags.exportSource.systemVersion;pcCoreVersion=responseJSON.flags.exportSource.coreVersion;if(pcCoreVersion!=coreVersion){coreVersionMismatch=true;errMsg=errMsg+"This PC was exported from Foundry v"+pcCoreVersion+" and this game server is running Foundry v"+coreVersion+".<br><br>"}
+if(pcGameSystemVersion!=systemVersion){systemVersionMismatch=true;if(versionCompare(pcGameSystemVersion,systemVersion)==1){abort=true;errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+systemVersion+".<br><br>Unfortunately, game systems usually are not backwards compatible, so we are aborting this import. To manually override, please download the hero export from herovau.lt. <br><strong>This may break this PC -- you  have been warned!</strong><br><br>";}else
+errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+systemVersion+".<br><br>";}
+if(hvDebug)
+console.log("%cHeroVau.lt/Foundry Bridge | Mismatch?:%c"+systemVersionMismatch+" | "+coreVersionMismatch,hvColor1,hvColor4);if(systemVersionMismatch||coreVersionMismatch){errMsg=errMsg+"There may be compatibility issues."
+let chatData={user:game.user._id,speaker:ChatMessage.getSpeaker(),content:errMsg,whisper:[game.user._id]};ChatMessage.create(chatData,{});if(abort)
+return;}
+if(responseJSON._id){importPCID=new RegExp(responseJSON._id,"g");charDataStr=JSON.stringify(responseJSON);if(hvDebug){console.log("%cHeroVau.lt/Foundry Bridge | Target ID:%c"+targetPCID,hvColor1,hvColor4);console.log("%cHeroVau.lt/Foundry Bridge | %c"+charDataStr,hvColor1,hvColor4);}
+charDataStr=charDataStr.replace(importPCID,targetPCID);charImport=JSON.parse(charDataStr);}
+else
+{charImport=responseJSON;charImport._id=targetPCID}
+if(charImport.token.sightAngle<1)
+charImport.token.sightAngle=360
+if(charImport.token.lightAngle<1)
+charImport.token.lightAngle=360
+console.log("%cHLO Importer | %c Importing "+charImport.name,hvColor1,hvColor4);targetActor.importFromJSON(JSON.stringify(charImport));}}};console.log("%cHeroVau.lt/Foundry Bridge | %cDownloading PC from: "+charURL,hvColor1,hvColor4);xmlhttp.open("GET",charURL,true);xmlhttp.send();}
 var Cookie={set:function(name,value,days)
 {var domain,domainParts,date,expires,host;if(days)
 {date=new Date();date.setTime(date.getTime()+(days*86400000));expires="; expires="+date.toGMTString();}
@@ -149,4 +164,6 @@ else
 {c=c.substring(1,c.length);}
 if(c.indexOf(nameEQ)==0)return c.substring(nameEQ.length,c.length);}
 return null;},erase:function(name)
-{Cookie.set(name,'',-1);}};
+{Cookie.set(name,'',-1);}};versionCompare=function(left,right){if(typeof left+typeof right!='stringstring')
+return false;var a=left.split('.'),b=right.split('.'),i=0,len=Math.max(a.length,b.length);for(;i<len;i++){if((a[i]&&!b[i]&&parseInt(a[i])>0)||(parseInt(a[i])>parseInt(b[i]))){return 1;}else if((b[i]&&!a[i]&&parseInt(b[i])>0)||(parseInt(a[i])<parseInt(b[i]))){return-1;}}
+return 0;}
