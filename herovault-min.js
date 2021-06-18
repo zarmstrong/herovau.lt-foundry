@@ -1,4 +1,4 @@
-let hvDebug=false;const hvVer="0.1.4";const hvColor1='color: #7bf542';const hvColor2='color: #d8eb34';const hvColor3='color: #ffffff';const hvColor4='color: #cccccc';const hvColor5='color: #ff0000';function isFunction(possibleFunction){return typeof(possibleFunction)===typeof(Function);}
+let hvDebug=false;const hvVer="0.1.5";const hvColor1='color: #7bf542';const hvColor2='color: #d8eb34';const hvColor3='color: #ffffff';const hvColor4='color: #cccccc';const hvColor5='color: #ff0000';function isFunction(possibleFunction){return typeof(possibleFunction)===typeof(Function);}
 Hooks.on('ready',async function(){console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);});Hooks.on('renderActorSheet',function(obj,html){const actor=obj.actor;v8=isFunction(actor.canUserModify);if(hvDebug){if(v8)
 console.log("%cHeroVau.lt/Foundry Bridge | %cCan user modify: "+actor.canUserModify(game.user,"update"),hvColor1,hvColor4);else
 console.log("%cHeroVau.lt/Foundry Bridge | %cActor type: "+actor.data.type+"can update?: "+actor.can(game.user,"update"),hvColor1,hvColor4);}
@@ -136,7 +136,7 @@ console.log("%cHeroVau.lt/Foundry Bridge | %c"+responseJSON,hvColor1,hvColor4);i
 else{importPCID=new RegExp(responseJSON._id,"g");targetPCID=targetActor.data._id;charDataStr=JSON.stringify(responseJSON);charDataStr=charDataStr.replace(importPCID,targetPCID);charImport=JSON.parse(charDataStr);console.log("%cHLO Importer | %c Importing "+charImport.name,hvColor1,hvColor4);targetActor.importFromJSON(JSON.stringify(charImport));}}};console.log("%cHeroVau.lt/Foundry Bridge | %cDownloading PC from: "+charURL,hvColor1,hvColor4);xmlhttp.open("GET",charURL,true);xmlhttp.send();}
 var Cookie={set:function(name,value,days)
 {var domain,domainParts,date,expires,host;if(days)
-{date=new Date();date.setTime(date.getTime()+(days*24*60*60.1.40));expires="; expires="+date.toGMTString();}
+{date=new Date();date.setTime(date.getTime()+(days*24*60*60.1.50));expires="; expires="+date.toGMTString();}
 else
 {expires="";}
 host=location.host;if(host.split('.').length===1)
