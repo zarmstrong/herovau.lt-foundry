@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer="0.1.8";
+const hvVer="0.1.9";
 
 const hvColor1='color: #7bf542';  //bright green
 const hvColor2='color: #d8eb34'; //yellow green
@@ -17,10 +17,10 @@ Hooks.on('ready', async function() {
 
 Hooks.on('renderActorSheet', function(obj, html){
   const actor = obj.actor;
-  v8=isFunction(actor.canUserModify);
+  v8=versionCompare(game.data.version,'0.8.5');
   // Only inject the link if the actor is of type "character" and the user has permission to update it
   if (hvDebug) {
-    if (v8)
+    if (v8==1)
       console.log("%cHeroVau.lt/Foundry Bridge | %cCan user modify: " + actor.canUserModify(game.user, "update"),hvColor1,hvColor4);
     else
       console.log("%cHeroVau.lt/Foundry Bridge | %cActor type: " + actor.data.type + "can update?: " + actor.can(game.user, "update"),hvColor1,hvColor4);
@@ -28,10 +28,12 @@ Hooks.on('renderActorSheet', function(obj, html){
     
   if (!actor.data.type === "character") return;
 
-  if (v8)
+  if (v8==1) {
     if (actor.canUserModify(game.user, "update")==false) return;
-  else
+  }
+  else {
     if (!(actor.data.type === "character" && actor.can(game.user, "update"))) return;
+  }
   
   let element = html.find(".window-header .window-title");
   if (element.length != 1) return;

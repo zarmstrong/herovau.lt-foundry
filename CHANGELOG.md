@@ -1,3 +1,7 @@
+## 0.1.9 (Jun 18, 2021)
+
+* fix issue that prevented module from working in 0.8.x
+
 ## 0.1.8 (Jun 17, 2021)
 
 * fix a few bugs (sight and light angle)

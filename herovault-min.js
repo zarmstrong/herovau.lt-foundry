@@ -1,10 +1,10 @@
-let hvDebug=false;const hvVer="0.1.8";const hvColor1='color: #7bf542';const hvColor2='color: #d8eb34';const hvColor3='color: #ffffff';const hvColor4='color: #cccccc';const hvColor5='color: #ff0000';function isFunction(possibleFunction){return typeof(possibleFunction)===typeof(Function);}
-Hooks.on('ready',async function(){console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);});Hooks.on('renderActorSheet',function(obj,html){const actor=obj.actor;v8=isFunction(actor.canUserModify);if(hvDebug){if(v8)
+let hvDebug=false;const hvVer="0.1.9";const hvColor1='color: #7bf542';const hvColor2='color: #d8eb34';const hvColor3='color: #ffffff';const hvColor4='color: #cccccc';const hvColor5='color: #ff0000';function isFunction(possibleFunction){return typeof(possibleFunction)===typeof(Function);}
+Hooks.on('ready',async function(){console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);});Hooks.on('renderActorSheet',function(obj,html){const actor=obj.actor;v8=versionCompare(game.data.version,'0.8.5');if(hvDebug){if(v8==1)
 console.log("%cHeroVau.lt/Foundry Bridge | %cCan user modify: "+actor.canUserModify(game.user,"update"),hvColor1,hvColor4);else
 console.log("%cHeroVau.lt/Foundry Bridge | %cActor type: "+actor.data.type+"can update?: "+actor.can(game.user,"update"),hvColor1,hvColor4);}
-if(!actor.data.type==="character")return;if(v8)
-if(actor.canUserModify(game.user,"update")==false)return;else
-if(!(actor.data.type==="character"&&actor.can(game.user,"update")))return;let element=html.find(".window-header .window-title");if(element.length!=1)return;let vaultButton=$(`<a class="popout"><i class="fas fa-cloud"></i>Vault</a>`);vaultButton.on('click',()=>beginVaultConnection(obj.object));element.after(vaultButton);});function renderVault(){let applyChanges=false;let defaulttoken=Cookie.get('herovault_user_token');if(defaulttoken==null)
+if(!actor.data.type==="character")return;if(v8==1){if(actor.canUserModify(game.user,"update")==false)return;}
+else{if(!(actor.data.type==="character"&&actor.can(game.user,"update")))return;}
+let element=html.find(".window-header .window-title");if(element.length!=1)return;let vaultButton=$(`<a class="popout"><i class="fas fa-cloud"></i>Vault</a>`);vaultButton.on('click',()=>beginVaultConnection(obj.object));element.after(vaultButton);});function renderVault(){let applyChanges=false;let defaulttoken=Cookie.get('herovault_user_token');if(defaulttoken==null)
 defaulttoken="";new Dialog({title:`HeroVau.lt Import`,content:`
       
       <div>
