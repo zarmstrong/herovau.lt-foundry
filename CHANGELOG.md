@@ -1,7 +1,11 @@
+## 0.1.8 (Jun 17, 2021)
+
+* fix a few bugs (sight and light angle)
+* built in version checker to warn on possible incompatabilities, and prevent importing PCs from newer versions of game systems.
+
 ## 0.1.7 (Jun 17, 2021)
 
 * (trying again) fixed a bug in the version updating script that broke the cookie function
-
 
 ## 0.1.6 (Jun 17, 2021)
 

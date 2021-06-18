@@ -400,7 +400,7 @@ async function importCharacter(targetActor, charURL){
       if (this.readyState == 4 && this.status == 200) {
         let responseJSON = JSON.parse(this.responseText);
         if (hvDebug) 
-            console.log("%cHeroVau.lt/Foundry Bridge | %c"+responseJSON,hvColor1,hvColor4);
+            console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);
         if (error){
           new Dialog({
             title: `HeroVau.lt`,
@@ -421,11 +421,63 @@ async function importCharacter(targetActor, charURL){
         }
         else {
           // responseJSON
-          importPCID=new RegExp(responseJSON._id, "g");
+          // console.log("%cHeroVau.lt/Foundry Bridge | Import ID:%c"+responseJSON._id,hvColor1,hvColor4);
           targetPCID=targetActor.data._id;
-          charDataStr=JSON.stringify(responseJSON);
-          charDataStr=charDataStr.replace(importPCID,targetPCID);
-          charImport=JSON.parse(charDataStr);
+          let coreVersionMismatch=false;
+          let systemVersionMismatch=false;
+          let abort=false;
+          let errMsg='';
+          let systemVersion=game.system.data.version;
+          let coreVersion=game.data.version;
+          pcGameSystemVersion=responseJSON.flags.exportSource.systemVersion;
+          pcCoreVersion=responseJSON.flags.exportSource.coreVersion;
+          if (pcCoreVersion != coreVersion){
+            coreVersionMismatch=true;
+            errMsg=errMsg+"This PC was exported from Foundry v"+pcCoreVersion+" and this game server is running Foundry v"+ coreVersion+".<br><br>"
+          }
+          if (pcGameSystemVersion != systemVersion){
+            systemVersionMismatch=true;
+            if (versionCompare(pcGameSystemVersion,systemVersion) == 1) { //game system is older than PC, this could be bad!
+              abort=true;
+              errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+ systemVersion+".<br><br>Unfortunately, game systems usually are not backwards compatible, so we are aborting this import. To manually override, please download the hero export from herovau.lt. <br><strong>This may break this PC -- you  have been warned!</strong><br><br>";
+            } else
+              errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+ systemVersion+".<br><br>";
+          }
+          if (hvDebug) 
+            console.log("%cHeroVau.lt/Foundry Bridge | Mismatch?:%c"+systemVersionMismatch+" | " +coreVersionMismatch,hvColor1,hvColor4);
+          if (systemVersionMismatch || coreVersionMismatch) {
+
+            errMsg=errMsg+"There may be compatibility issues."  
+            let chatData = {
+                user: game.user._id,
+                speaker: ChatMessage.getSpeaker(),
+                content: errMsg,
+                whisper: [game.user._id]
+            };
+            ChatMessage.create(chatData, {});
+            if (abort)
+              return;
+          }
+
+          if (responseJSON._id) {
+            importPCID=new RegExp(responseJSON._id, "g");
+            charDataStr=JSON.stringify(responseJSON);
+            if (hvDebug) {
+                console.log("%cHeroVau.lt/Foundry Bridge | Target ID:%c"+targetPCID,hvColor1,hvColor4);
+                console.log("%cHeroVau.lt/Foundry Bridge | %c"+charDataStr,hvColor1,hvColor4);
+            }
+            charDataStr=charDataStr.replace(importPCID,targetPCID);
+            charImport=JSON.parse(charDataStr);
+          }
+          else
+          {
+            charImport=responseJSON;
+            charImport._id=targetPCID
+          }
+          if (charImport.token.sightAngle<1)
+            charImport.token.sightAngle=360
+          if (charImport.token.lightAngle<1)
+            charImport.token.lightAngle=360
           console.log("%cHLO Importer | %c Importing "+charImport.name,hvColor1,hvColor4);
           targetActor.importFromJSON(JSON.stringify(charImport));
       }
@@ -501,3 +553,44 @@ var Cookie =
       Cookie.set(name, '', -1);
    }
 };
+//credit to https://gist.github.com/alexey-bass/1115557
+/**
+ * Simply compares two string version values.
+ * 
+ * Example:
+ * versionCompare('1.1', '1.2') => -1
+ * versionCompare('1.1', '1.1') =>  0
+ * versionCompare('1.2', '1.1') =>  1
+ * versionCompare('2.23.3', '2.22.3') => 1
+ * 
+ * Returns:
+ * -1 = left is LOWER than right
+ *  0 = they are equal
+ *  1 = left is GREATER = right is LOWER
+ *  And FALSE if one of input versions are not valid
+ *
+ * @function
+ * @param {String} left  Version #1
+ * @param {String} right Version #2
+ * @return {Integer|Boolean}
+ * @author Alexey Bass (albass)
+ * @since 2011-07-14
+ */
+versionCompare = function(left, right) {
+    if (typeof left + typeof right != 'stringstring')
+        return false;
+    
+    var a = left.split('.')
+    ,   b = right.split('.')
+    ,   i = 0, len = Math.max(a.length, b.length);
+        
+    for (; i < len; i++) {
+        if ((a[i] && !b[i] && parseInt(a[i]) > 0) || (parseInt(a[i]) > parseInt(b[i]))) {
+            return 1;
+        } else if ((b[i] && !a[i] && parseInt(b[i]) > 0) || (parseInt(a[i]) < parseInt(b[i]))) {
+            return -1;
+        }
+    }
+    
+    return 0;
+}
