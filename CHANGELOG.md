@@ -1,4 +1,4 @@
-## 0.1.9 (Jun 18, 2021)
+## 0.1.10 (Jun 18, 2021)
 
 * fix issue that prevented module from working in 0.8.x
 * made an option to not show the token confirmation window. (automatically reappears if an invalid token is provided, or after 30 days, whichever comes first).
