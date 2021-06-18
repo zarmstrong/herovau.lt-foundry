@@ -1,4 +1,8 @@
-## 0.1.5 (Jun 16, 2021)
+## 0.1.5 (Jun 17, 2021)
+
+* fixed a bug in the version updating script that broke the cookie function
+
+## 0.1.5 (Jun 17, 2021)
 
 * fixed the module.json to point to minified js
 
