@@ -88,7 +88,7 @@ function importPFSChar() {}
 
 */
 
-
+/*
 function renderVault() {
   let applyChanges=false;
   let defaulttoken=Cookie.get('herovault_user_token');
@@ -162,79 +162,85 @@ function renderVault() {
     }
   }).render(true);
 }
-
+*/
 function beginVaultConnection(targetActor,userToken){
   let applyChanges=false;
   let defaulttoken=Cookie.get('herovault_user_token');
-  if (defaulttoken==null)
-    defaulttoken="";
-  new Dialog({
-    title: `HeroVau.lt Import`,
-    content: `
-      
-      <div>
-        <p>Enter your User Token from HeroVau.lt. You can find it on the My Account page.</p>
-      <div>
-      <hr/>
-      <div id="divCode">
-        <div id="divOuter">
-          <div id="divInner">
-            <input id="textBoxUserToken" type="text" maxlength="124" value="${defaulttoken}"/>
+  let skipTokenCookie=Cookie.get('herovault_skiptoken');
+  if (skipTokenCookie) {
+    loadPersonalVault(targetActor, defaulttoken);
+  } else {
+    if (defaulttoken==null)
+      defaulttoken="";
+    new Dialog({
+      title: `HeroVau.lt Import`,
+      content: `
+        <div>
+          <p>Enter your User Token from HeroVau.lt. You can find it on the <a href="https://herovau.lt/?action=myaccount">My Account</a> page on http://herovau.lt</p>
+        <div>
+        <hr/>
+        <div id="divCode">
+          <div id="divOuter">
+            <div id="divInner">
+              <input id="textBoxUserToken" type="text" maxlength="124" value="${defaulttoken}"/>
+            </div>
           </div>
         </div>
-      </div>
-      <br/>
-      <style>
-      
-        #textBoxElementID {
-            border: 0px;
-            padding-left: 2px;
-            letter-spacing: 1px;
-            width: 330px;
-            min-width: 330px;
-          }
-          
-          #divInner{
-            left: 0;
-            position: sticky;
-          }
-          
-          #divOuter{
-            width: 285px; 
-            overflow: hidden;
-          }
-  
-          #divCode{  
-            border: 1px solid black;
-            width: 300px;
-            margin: 0 auto;
-            padding: 5px;
-          }
-  
-      </style>
-      `,
-    buttons: {
-      yes: {
-        icon: "<i class='fas fa-check'></i>",
-        label: `Load Vault`,
-        callback: () => applyChanges = true
+        <div id="">
+          <div id="divOuter">
+            <div id="divInner">
+              <input type="checkbox" id="skipToken" name="skipToken" value="true"><label for="skipToken"> Skip this screen in the future.</label>
+            </div>
+          </div>
+        </div>
+        <br/>
+        <style>
+          #textBoxElementID {
+              border: 0px;
+              padding-left: 2px;
+              letter-spacing: 1px;
+              width: 330px;
+              min-width: 330px;
+            }
+            #divInner{
+              left: 0;
+              position: sticky;
+            }
+            #divOuter{
+              width: 285px; 
+              overflow: hidden;
+            }
+            #divCode{  
+              border: 1px solid black;
+              width: 300px;
+              margin: 0 auto;
+              padding: 5px;
+            }
+        </style>`,
+      buttons: {
+        yes: {
+          icon: "<i class='fas fa-check'></i>",
+          label: `Load Vault`,
+          callback: () => applyChanges = true
+        },
+        no: {
+          icon: "<i class='fas fa-times'></i>",
+          label: `Cancel`
+        },
       },
-      no: {
-        icon: "<i class='fas fa-times'></i>",
-        label: `Cancel`
-      },
-    },
-    default: "yes",
-    close: html => {
-      if (applyChanges) {
-         
-         let userToken= html.find('[id="textBoxUserToken"]')[0].value;
-         Cookie.set('herovault_user_token',userToken,365); 
-         loadPersonalVault(targetActor, userToken);
-  
+      default: "yes",
+      close: html => {
+        if (applyChanges) {
+          let userToken= html.find('[id="textBoxUserToken"]')[0].value;
+          let skipToken= html.find('[id="skipToken"]')[0].checked;
+          Cookie.set('herovault_user_token',userToken,365); 
+          if (skipToken)
+            Cookie.set('herovault_skiptoken',skipToken,30);
+          loadPersonalVault(targetActor, userToken);
+        }
       }
-    }
-  }).render(true);
+    }).render(true);
+  }
 
 }
 
@@ -277,9 +283,11 @@ function loadPersonalVault(targetActor, userToken){
           if (Object.keys(responseJSON).length>=1){
             if (hvDebug)
               console.log("%cHeroVau.lt/Foundry Bridge | %cCalling checkHLOCharacterIsCorrect",hvColor1,hvColor4);
+
               createPCTable(targetActor, responseJSON);
           } else {
             ui.notifications.warn("Unable load vault.  Please double-check your User Token.");
+            Cookie.set('herovault_skiptoken',"",-1);
             return;
         }
       }
