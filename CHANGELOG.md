@@ -1,3 +1,7 @@
+## 0.2.0 (Jun 22, 2021)
+
+* you can now export to HeroVau.lt 
+
 ## 0.1.10 (Jun 18, 2021)
 
 * fix issue that prevented module from working in 0.8.x
