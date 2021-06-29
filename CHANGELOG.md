@@ -2,7 +2,9 @@
 
 * integration with HeroLab Importer and Pathbuilder Importer
 * fixed HeroVau.lt showing up on non-character sheets (for real this time) 
-* remove cookie based settings and moved to native foundry based settings
+* page no longer refreshes when settings are changed
+* moved most settings from being stored in cookies, except for herovault token, as we don't want to store it on the foundry server for security purposes. 
+* upped compatible version to 0.8.8
 
 ## 0.2.1 (Jun 23, 2021)
 
