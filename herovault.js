@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer="0.3.1";
+const hvVer="0.3.2";
 const heroVaultURL='https://herovau.lt';
 // const heroVaultURL='https://dev.herovau.lt';
 
