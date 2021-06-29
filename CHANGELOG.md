@@ -1,3 +1,7 @@
+## 0.3.1 (Jun 29, 2021)
+
+* fix pathbuilder import to pull minified
+
 ## 0.3.0 (Jun 28, 2021)
 
 * integration with HeroLab Importer and Pathbuilder Importer

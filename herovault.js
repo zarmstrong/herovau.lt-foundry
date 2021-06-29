@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer="0.3.0";
+const hvVer="0.3.1";
 const heroVaultURL='https://herovau.lt';
 // const heroVaultURL='https://dev.herovau.lt';
 
@@ -142,7 +142,7 @@ function checkNextAction(obj) {
 }
 
 async function loadPB(obj) {
-  let {beginPathbuilderImport} = await import('/modules/pathbuilder2e-import/pathbuilder-import.js');
+  let {beginPathbuilderImport} = await import('/modules/pathbuilder2e-import/pathbuilder-import-min.js');
   beginPathbuilderImport(obj,true)
 }
 
