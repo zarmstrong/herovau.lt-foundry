@@ -1,3 +1,13 @@
+## 0.3.0 (Jun 28, 2021)
+
+* integration with HeroLab Importer and Pathbuilder Importer
+* fixed HeroVau.lt showing up on non-character sheets (for real this time) 
+* remove cookie based settings and moved to native foundry based settings
+
+## 0.2.1 (Jun 23, 2021)
+
+* fixed HeroVau.lt showing up on non-character sheets
+
 ## 0.2.0 (Jun 22, 2021)
 
 * you can now export to HeroVau.lt 
