@@ -1,3 +1,7 @@
+## 0.3.3 (Jun 29, 2021)
+
+* fix bug where exports that don't have exportsources would fail to import
+
 ## 0.3.2 (Jun 29, 2021)
 
 * fix pathbuilder import to pull minified

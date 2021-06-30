@@ -1,7 +1,6 @@
 let hvDebug = false;
 const hvVer="0.3.2";
-const heroVaultURL='https://herovau.lt';
-// const heroVaultURL='https://dev.herovau.lt';
+const heroVaultURL='https://dev.herovau.lt';
 
 const hvColor1='color: #7bf542';  //bright green
 const hvColor2='color: #d8eb34'; //yellow green
@@ -793,36 +792,37 @@ async function importCharacter(targetActor, charURL){
           let abort=false;
           let systemVersion=game.system.data.version;
           let coreVersion=game.data.version;
-          let pcGameSystemVersion=responseJSON.flags.exportSource.systemVersion;
-          let pcCoreVersion=responseJSON.flags.exportSource.coreVersion;
-          if (pcCoreVersion != coreVersion){
-            coreVersionMismatch=true;
-            errMsg=errMsg+"This PC was exported from Foundry v"+pcCoreVersion+" and this game server is running Foundry v"+ coreVersion+".<br><br>"
-          }
-          if (pcGameSystemVersion != systemVersion){
-            systemVersionMismatch=true;
-            if (HVversionCompare(pcGameSystemVersion,systemVersion) == 1) { //game system is older than PC, this could be bad!
-              abort=true;
-              errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+ systemVersion+".<br><br>Unfortunately, game systems usually are not backwards compatible, so we are aborting this import. To manually override, please download the hero export from herovau.lt. <br><strong>This may break this PC -- you  have been warned!</strong><br><br>";
-            } else
-              errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+ systemVersion+".<br><br>";
-          }
-          if (hvDebug) 
-            console.log("%cHeroVau.lt/Foundry Bridge | Mismatch?:%c"+systemVersionMismatch+" | " +coreVersionMismatch,hvColor1,hvColor4);
-          if (systemVersionMismatch || coreVersionMismatch) {
+          let pcGameSystemVersion;
+          let pcCoreVersion;
+          if (responseJSON.flags.exportSource != undefined  && responseJSON.flags.exportSource.systemVersion != undefined && responseJSON.flags.exportSource.coreVersion != undefined ) {
+            if (pcCoreVersion != coreVersion){
+              coreVersionMismatch=true;
+              errMsg=errMsg+"This PC was exported from Foundry v"+pcCoreVersion+" and this game server is running Foundry v"+ coreVersion+".<br><br>"
+            }
+            if (pcGameSystemVersion != systemVersion){
+              systemVersionMismatch=true;
+              if (HVversionCompare(pcGameSystemVersion,systemVersion) == 1) { //game system is older than PC, this could be bad!
+                abort=true;
+                errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+ systemVersion+".<br><br>Unfortunately, game systems usually are not backwards compatible, so we are aborting this import. To manually override, please download the hero export from herovau.lt. <br><strong>This may break this PC -- you  have been warned!</strong><br><br>";
+              } else
+                errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+ systemVersion+".<br><br>";
+            }
+            if (hvDebug) 
+              console.log("%cHeroVau.lt/Foundry Bridge | Mismatch?:%c"+systemVersionMismatch+" | " +coreVersionMismatch,hvColor1,hvColor4);
+            if (systemVersionMismatch || coreVersionMismatch) {
 
-            errMsg=errMsg+"There may be compatibility issues."  
-            let chatData = {
-                user: game.user._id,
-                speaker: ChatMessage.getSpeaker(),
-                content: errMsg,
-                whisper: [game.user._id]
-            };
-            ChatMessage.create(chatData, {});
-            if (abort)
-              return;
+              errMsg=errMsg+"There may be compatibility issues."  
+              let chatData = {
+                  user: game.user._id,
+                  speaker: ChatMessage.getSpeaker(),
+                  content: errMsg,
+                  whisper: [game.user._id]
+              };
+              ChatMessage.create(chatData, {});
+              if (abort)
+                return;
+            }
           }
-
           if (responseJSON._id) {
             importPCID=new RegExp(responseJSON._id, "g");
             charDataStr=JSON.stringify(responseJSON);
@@ -1024,7 +1024,6 @@ export function exportToHVFromPBHLO(heroJSON,tAct) {
   xmlhttp.open("POST", heroVaultURL+"/foundrymodule.php", true);
   xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   xmlhttp.send('action='+action+'&userToken='+hvUserToken+'&encodedChar='+pcEncodedJSON+'&gamesystem='+gameSystem+"&charUID="+newHash);
-  
 }
 
 export function supportCheck() {
