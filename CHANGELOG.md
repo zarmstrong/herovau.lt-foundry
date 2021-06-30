@@ -1,3 +1,7 @@
+## 0.4.1 (Jun 30, 2021)
+
+* hotfix for missing parenthesis
+
 ## 0.4.0 (Jun 30, 2021)
 
 * work-around for multiple imports appearing on forge-vtt

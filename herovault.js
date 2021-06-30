@@ -955,7 +955,7 @@ var Cookie = {
        domain = '.'+domainParts.join('.');
        // console.log("domain: "+ name+"="+value+expires+"; path=/; domain="+domain+"; SameSite=Strict");
        // console.log( "host: "+name+"="+value+expires+"; path=/; domain="+host+"; SameSite=Strict");
-       if (host.includes"forge-vtt.com"){
+       if (host.includes("forge-vtt.com"){
         document.cookie = name+"="+value+expires+"; path=/; domain=.forge-vtt.com; SameSite=Strict";
        } else {
          document.cookie = name+"="+value+expires+"; path=/; domain="+domain+"; SameSite=Strict";
