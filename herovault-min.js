@@ -142,13 +142,13 @@ console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvCo
                     <p>${responseJSON.error}<p>
                     <p>Please contact us with this information above by going to <a href="https://herovau.lt/?action=contact">https://herovau.lt/?action=contact</a>.<p>
                  </div><br>`,buttons:{yes:{icon:"<i class='fas fa-check'></i>",label:`Ok`}},default:"yes"}).render(true);}
-else{let targetPCID=targetActor.data._id;let coreVersionMismatch=false;let systemVersionMismatch=false;let abort=false;let systemVersion=game.system.data.version;let coreVersion=game.data.version;let pcGameSystemVersion=responseJSON.flags.exportSource.systemVersion;let pcCoreVersion=responseJSON.flags.exportSource.coreVersion;if(pcCoreVersion!=coreVersion){coreVersionMismatch=true;errMsg=errMsg+"This PC was exported from Foundry v"+pcCoreVersion+" and this game server is running Foundry v"+coreVersion+".<br><br>"}
+else{let targetPCID=targetActor.data._id;let coreVersionMismatch=false;let systemVersionMismatch=false;let abort=false;let systemVersion=game.system.data.version;let coreVersion=game.data.version;let pcGameSystemVersion;let pcCoreVersion;if(responseJSON.flags.exportSource!=undefined&&responseJSON.flags.exportSource.systemVersion!=undefined&&responseJSON.flags.exportSource.coreVersion!=undefined){if(pcCoreVersion!=coreVersion){coreVersionMismatch=true;errMsg=errMsg+"This PC was exported from Foundry v"+pcCoreVersion+" and this game server is running Foundry v"+coreVersion+".<br><br>"}
 if(pcGameSystemVersion!=systemVersion){systemVersionMismatch=true;if(HVversionCompare(pcGameSystemVersion,systemVersion)==1){abort=true;errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+systemVersion+".<br><br>Unfortunately, game systems usually are not backwards compatible, so we are aborting this import. To manually override, please download the hero export from herovau.lt. <br><strong>This may break this PC -- you  have been warned!</strong><br><br>";}else
 errMsg=errMsg+"This PC was exported from "+game.system.data.title+": "+pcGameSystemVersion+" and this game server is running "+game.system.data.title+": "+systemVersion+".<br><br>";}
 if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | Mismatch?:%c"+systemVersionMismatch+" | "+coreVersionMismatch,hvColor1,hvColor4);if(systemVersionMismatch||coreVersionMismatch){errMsg=errMsg+"There may be compatibility issues."
 let chatData={user:game.user._id,speaker:ChatMessage.getSpeaker(),content:errMsg,whisper:[game.user._id]};ChatMessage.create(chatData,{});if(abort)
-return;}
+return;}}
 if(responseJSON._id){importPCID=new RegExp(responseJSON._id,"g");charDataStr=JSON.stringify(responseJSON);if(hvDebug){console.log("%cHeroVau.lt/Foundry Bridge | Target ID:%c"+targetPCID,hvColor1,hvColor4);console.log("%cHeroVau.lt/Foundry Bridge | %c"+charDataStr,hvColor1,hvColor4);}
 charDataStr=charDataStr.replace(importPCID,targetPCID);charImport=JSON.parse(charDataStr);}
 else
