@@ -1,3 +1,10 @@
+## 0.4.0 (Jun 30, 2021)
+
+* work-around for multiple imports appearing on forge-vtt
+* attempting to make a cookie for forge-vtt so that you can set it and forget it with your usertoken across forge-vtt servers
+* exporting a PC from Foundry now attempts to export locally hosted images (runs async on the herovau.lt server)
+* fixed a bug (I think) where user token could break due to cookies 
+
 ## 0.3.3 (Jun 29, 2021)
 
 * fix bug where exports that don't have exportsources would fail to import

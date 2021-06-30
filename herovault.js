@@ -13,9 +13,10 @@ let enablePB=true;
 
 Hooks.on('ready', async function() {
   console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);
-  if (Cookie.get('herovault_user_token')) {
-      hvUserToken=Cookie.get('herovault_user_token');
-      Cookie.set('herovault_user_token',hvUserToken,60);
+
+  if (Cookie.get('hvut')) {
+      hvUserToken=Cookie.get('hvut');
+      Cookie.set('hvut',hvUserToken,60);
   }
   if (Cookie.get('herovault_skiptoken')){
       skipTokenPrompt=Cookie.get('herovault_skiptoken');
@@ -59,7 +60,7 @@ Hooks.on('ready', async function() {
       });
   hvDebug=game.settings.get('herovaultfoundry', 'debugEnabled');
   HLOuserToken=game.settings.get('herovaultfoundry', 'hlouserToken');
-  hvUserToken=Cookie.get('herovault_user_token');
+  hvUserToken=Cookie.get('hvut');
   skipTokenPrompt=game.settings.get('herovaultfoundry', 'skipTokenPrompt');
 });
 
@@ -85,11 +86,13 @@ Hooks.on('renderActorSheet', function(obj, html){
   
   let element = html.find(".window-header .window-title");
   if (element.length != 1) return;
-  
-  let vaultButton = $(`<a class="popout"><i class="fas fa-cloud"></i>Vault</a>`);
-
-  vaultButton.on('click', () => checkNextAction(obj.object));
-  element.after(vaultButton);
+  let head= html.find(".window-header");
+  let hvButton=head.find("#herovault");
+  if (hvButton.length == 0){
+    let vaultButton = $(`<a class="popout" id="herovault"><i class="fas fa-cloud"></i>Vault</a>`);
+    vaultButton.on('click', () => checkNextAction(obj.object));
+    element.after(vaultButton);    
+  }
   if (game.modules.get('pathbuilder2e-import')?.active  && enablePB) {
     $( "a:contains('Import from Pathbuilder')" ).remove();
   }
@@ -111,12 +114,14 @@ function checkUserToken() {
         hvUserToken=ut;
         game.settings.set('herovaultfoundry', 'skipTokenPrompt',true);
         skipTokenPrompt=true;
+        return true;
       } else {
 
         hvUserToken="";
-        Cookie.set('herovault_user_token',"",-1);
+        Cookie.set('hvut',"",-1);
         game.settings.set('herovaultfoundry', 'skipTokenPrompt',false);    
         skipTokenPrompt=false;
+        return false;
       }
     }
   };
@@ -315,7 +320,8 @@ function getVaultToken(callback,callbackArg1,callbackArg2,callbackArg3,callbackA
       if (applyChanges) {
         let userToken= html.find('[id="textBoxUserToken"]')[0].value;
         let skipToken= html.find('[id="skipToken"]')[0].checked;
-        Cookie.set('herovault_user_token',userToken,60);
+        // console.log("saving hvut " + userToken);
+        Cookie.set('hvut',userToken,60);
         hvUserToken=userToken;
         if (skipToken)
           game.settings.set('herovaultfoundry', 'skipTokenPrompt',true);
@@ -325,35 +331,91 @@ function getVaultToken(callback,callbackArg1,callbackArg2,callbackArg3,callbackA
   }).render(true); 
 }
 
-
 async function exportToHV(targetActor) {
   try {
+    var hvUserToken = Cookie.get('hvut');
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        let responseJSON = JSON.parse(this.responseText);
+        if (hvDebug) 
+            console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);
+        if (responseJSON.status==1){
+          performExportToHV(targetActor);
+        } else {
+          hvUserToken="";
+          Cookie.set('hvut',"",-1);
+          ui.notifications.warn("Unable to load vault.  Please double-check your User Token.");
+          game.settings.set('herovaultfoundry', 'skipTokenPrompt',false);
+          getVaultToken(exportToHV,targetActor, hvUserToken);
+        }
+      }
+    };
+    if (hvDebug)
+      console.log("%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=iv&userToken="+hvUserToken,hvColor1,hvColor4);
+    xmlhttp.open("GET", heroVaultURL+"/foundrymodule.php?action=iv&userToken="+hvUserToken, true);
+    xmlhttp.send();    
+
+
+  } catch(e) {
+    console.log(e);
+  }
+}
+
+async function performExportToHV(targetActor) {
+  try {
+    let menuButtons = {};
     let exportNewPC = false;
     let exportOverwritePC = false;
     let vaultInfo = false;
     let canOverwrite = false;
-    hvUserToken=Cookie.get('herovault_user_token');
-    let portrait,hvUID;
+    let portrait,hvUID,portraitAddress,tokenAddress;
 
-    if (targetActor.data.img.includes("mystery-man") == -1)
-    {
-      portrait=targetActor.data.img;
-    } else if (targetActor.data.token.img.includes("mystery-man") == -1) {
-      portrait=targetActor.data.token.img;
-    } else {
-      portrait=targetActor.data.img;
+    hvUserToken=Cookie.get('hvut');
+    portrait="icons/svg/mystery-man.svg";
+    if (targetActor.data.img != undefined && targetActor.data.token.img != undefined ) {
+      if (targetActor.data.img.includes("mystery-man") == -1)
+      {
+        portrait=targetActor.data.img;
+      } else if (targetActor.data.token.img.includes("mystery-man") == -1) {
+        portrait=targetActor.data.token.img;
+      } else {
+        portrait=targetActor.data.img;
+      }
+        if (hvDebug)
+          console.log("%cHeroVau.lt/Foundry Bridge | %cportrait includes: " + targetActor.data.img.includes("http"),hvColor1,hvColor4);
+      
+      if (targetActor.data.img.includes("http") == false) {
+        portraitAddress=game.data.addresses.remote+targetActor.data.img.trim();
+        // await targetActor.update({'data.img': portraitAddress});
+        // targetActor.data.img=portraitAddress;
+        if (hvDebug){
+          console.log("%cHeroVau.lt/Foundry Bridge | %c target: " + targetActor,hvColor1,hvColor4);
+          console.log("%cHeroVau.lt/Foundry Bridge | %cportrait: " + portraitAddress,hvColor1,hvColor4);
+          console.log("%cHeroVau.lt/Foundry Bridge | %csheet portrait: " + targetActor.data.img,hvColor1,hvColor4);
+        }
+      }
+      if (targetActor.data.token.img.includes("http") == false) {
+        tokenAddress=game.data.addresses.remote+targetActor.data.token.img.trim();
+        await targetActor.update({'data.token.img': tokenAddress});
+        // targetActor.data.token.img=tokenAddress;
+        if (hvDebug) {
+          console.log("%cHeroVau.lt/Foundry Bridge | %ctoken: " + tokenAddress,hvColor1,hvColor4);
+          console.log("%cHeroVau.lt/Foundry Bridge | %csheet token: " + targetActor.data.token.img,hvColor1,hvColor4);
+        }
+      }
     }
-    let menuButtons = {};
+
     if (hasProperty(targetActor,"data.flags.herovault.uid")) {
       hvUID=targetActor.data.flags.herovault.uid;
-      let accChk = await checkForAccess(hvUserToken,hvUID);
+      let accChk = checkForAccess(hvUserToken,hvUID);
       canOverwrite=accChk;
       // Promise.resolve(checkForAccess(hvUserToken,hvUID)).then( res => canOverwrite=res);
     }
     vaultInfo = await getVaultSlots(hvUserToken);
     // Promise.resolve(getVaultSlots(userToken)).then( res => vaultInfo=res);
     if (hvDebug)
-      console.log("%cHeroVau.lt/Foundry Bridge | %cvaultInfo: " + vaultInfo,hvColor1,hvColor4);
+      console.log("%cHeroVau.lt/Foundry Bridge | %cvaultInfo: " + JSON.stringify(vaultInfo),hvColor1,hvColor4);
 
     let totalSlots=vaultInfo.totalSlots;
     let usedSlots=vaultInfo.usedSlots;
@@ -410,7 +472,7 @@ async function exportToHV(targetActor) {
         close: async (html) => {
           if (exportNewPC) {
             hvUID="";
-            let exportStatus = await exportPCtoHV(targetActor, hvUserToken, hvUID, true);
+            let exportStatus = await exportPCtoHV(targetActor, hvUserToken, hvUID, true, portraitAddress,tokenAddress);
             if (exportStatus.error== true) {
               ui.notifications.error("Error exporting: " + exportStatus.message);
             } else {
@@ -419,7 +481,7 @@ async function exportToHV(targetActor) {
           } else if (exportOverwritePC){
             if (hvDebug)
               console.log("export overwrite PC");
-            let exportStatus = await exportPCtoHV(targetActor, hvUserToken, hvUID, false);
+            let exportStatus = await exportPCtoHV(targetActor, hvUserToken, hvUID, false, portraitAddress,tokenAddress);
             if (exportStatus.error== true) {
               ui.notifications.error("Error exporting: " + exportStatus.message);
             } else {
@@ -433,8 +495,7 @@ async function exportToHV(targetActor) {
     console.log(e);
   }
 }
-
-const checkForAccess = (hvUserToken,hvUID) => {
+const checkForAccess = async (hvUserToken,hvUID) => {
     return new Promise((resolve) => {
       let error=false;
       var xmlhttp = new XMLHttpRequest();
@@ -459,7 +520,7 @@ const checkForAccess = (hvUserToken,hvUID) => {
     });
 };
 
-const getVaultSlots = (hvUserToken) => {
+const getVaultSlots = async (hvUserToken) => {
   return new Promise((resolve) => {
     let error=false;
     var xmlhttp = new XMLHttpRequest();
@@ -482,7 +543,7 @@ const getVaultSlots = (hvUserToken) => {
   });
 };
 
-const exportPCtoHV = (targetActor, userToken,charUID,importAsNew) => {
+const exportPCtoHV = (targetActor, userToken,charUID,importAsNew, portraitAddress,tokenAddress) => {
   return new Promise((resolve) => {
     let error=false;
     let action='';
@@ -493,7 +554,6 @@ const exportPCtoHV = (targetActor, userToken,charUID,importAsNew) => {
 
     const gameSystem=game.data.system.id;
     let pcEncodedJSON=encodeURIComponent(JSON.stringify(targetActor.data));
-    // console.log(pcEncodedJSON);
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
       if (this.readyState == 4 && this.status == 200) {
@@ -506,7 +566,7 @@ const exportPCtoHV = (targetActor, userToken,charUID,importAsNew) => {
     // console.log("%cHeroVau.lt/Foundry Bridge | %chttps://herovau.lt/foundrymodule.php?action=importNewPC&userToken="+userToken+"&encodedChar="+pcEncodedJSON,hvColor1,hvColor4);
     xmlhttp.open("POST", heroVaultURL+"/foundrymodule.php", true);
     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    xmlhttp.send('action='+action+'&userToken='+userToken+'&encodedChar='+pcEncodedJSON+'&gamesystem='+gameSystem+'&charUID='+charUID);
+    xmlhttp.send('action='+action+'&userToken='+userToken+'&encodedChar='+pcEncodedJSON+'&gamesystem='+gameSystem+'&charUID='+charUID+'&portraitAddress='+encodeURIComponent(portraitAddress)+'&tokenAddress='+encodeURIComponent(tokenAddress));
   });
 }
 
@@ -756,7 +816,7 @@ function requestCharacter(targetActor,charUID){
     xmlhttp.send();
 }
 
-async function importCharacter(targetActor, charURL){
+async function importCharacter(targetActor, charURL) {
     let error=false;
     var importPCID,errMsg, charDataStr, charImport;
     var xmlhttp = new XMLHttpRequest();
@@ -782,8 +842,7 @@ async function importCharacter(targetActor, charURL){
             },
             default: "yes"
           }).render(true);
-        }
-        else {
+        } else {
           // responseJSON
           // console.log("%cHeroVau.lt/Foundry Bridge | Import ID:%c"+responseJSON._id,hvColor1,hvColor4);
           let targetPCID=targetActor.data._id;
@@ -859,9 +918,8 @@ async function importCharacter(targetActor, charURL){
           request2.open('GET', charImport.img, true);
           request2.onreadystatechange = function() {
             if (this.status === 404) {
-              console.log("got a 404");
-              // console.log(targetActor.data)
-              // console.log(targetActor.img)
+              if (hvDebug)
+                console.log("got a 404");
               targetActor.update({'img': "icons/svg/mystery-man.svg"});
             }
           }
@@ -876,68 +934,58 @@ async function importCharacter(targetActor, charURL){
     xmlhttp.send();
 }
 
-var Cookie =
-{
-   set: function(name, value, days)
-   {
-      var domain, domainParts, date, expires, host;
-
-      if (days)
-      {
-         date = new Date();
-         date.setTime(date.getTime()+(days*86400000));
-         expires = "; expires="+date.toGMTString();
-      }
-      else
-      {
-         expires = "";
-      }
-
-      host = location.host;
-      if (host.split('.').length === 1)
-      {
-         // no "." in a domain - it's localhost or something similar
-         document.cookie = name+"="+value+expires+"; path=/; SameSite=Strict";
-      }
-      else
-      {
-         domainParts = host.split('.');
-         domainParts.shift();
-         domain = '.'+domainParts.join('.');
-
+var Cookie = {
+  set: function(name, value, days) {
+    var domain, domainParts, date, expires, host;
+    if (days) {
+       date = new Date();
+       date.setTime(date.getTime()+(days*86400000));
+       expires = "; expires="+date.toGMTString();
+    } else {
+       expires = "";
+    }
+    host = location.host;
+    // console.log("herovault set| host: "+host)
+    if (host.split('.').length === 1) {
+       // no "." in a domain - it's localhost or something similar
+       document.cookie = name+"="+value+expires+"; path=/; SameSite=Strict";
+    } else {
+       domainParts = host.split('.');
+       domainParts.shift();
+       domain = '.'+domainParts.join('.');
+       // console.log("domain: "+ name+"="+value+expires+"; path=/; domain="+domain+"; SameSite=Strict");
+       // console.log( "host: "+name+"="+value+expires+"; path=/; domain="+host+"; SameSite=Strict");
+       if (host.includes"forge-vtt.com"){
+        document.cookie = name+"="+value+expires+"; path=/; domain=.forge-vtt.com; SameSite=Strict";
+       } else {
          document.cookie = name+"="+value+expires+"; path=/; domain="+domain+"; SameSite=Strict";
-         // check if cookie was successfuly set to the given domain
-         // (otherwise it was a Top-Level Domain)
-         if (Cookie.get(name) == null || Cookie.get(name) != value)
-         {
-            // append "." to current domain
-            domain = '.'+host;
-            document.cookie = name+"="+value+expires+"; path=/; domain="+domain+"; SameSite=Strict";
-         }
-      }
-   },
+         document.cookie = name+"="+value+expires+"; path=/; domain="+host+"; SameSite=Strict";
+       }
+       // check if cookie was successfuly set to the given domain
+       // (otherwise it was a Top-Level Domain)
+       if (Cookie.get(name) == null || Cookie.get(name) != value) {
+          // append "." to current domain
+          domain = '.'+host;
+          document.cookie = name+"="+value+expires+"; path=/; domain="+domain+"; SameSite=Strict";
+       }
+    }
+  },
+  get: function(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i=0; i < ca.length; i++) {
+       var c = ca[i];
+       while (c.charAt(0)==' ') {
+          c = c.substring(1,c.length);
+       }
 
-   get: function(name)
-   {
-      var nameEQ = name + "=";
-      var ca = document.cookie.split(';');
-      for (var i=0; i < ca.length; i++)
-      {
-         var c = ca[i];
-         while (c.charAt(0)==' ')
-         {
-            c = c.substring(1,c.length);
-         }
-
-         if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-      }
-      return null;
-   },
-
-   erase: function(name)
-   {
-      Cookie.set(name, '', -1);
-   }
+       if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+  },
+  erase: function(name) {
+    Cookie.set(name, '', -1);
+  }
 };
 //credit to https://gist.github.com/alexey-bass/1115557
 /**
