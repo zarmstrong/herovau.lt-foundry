@@ -1,3 +1,8 @@
+## 0.5.0 (Jun 30, 2021)
+
+* rewrote the connectors between hlo importer & pathbuilder to herovault to use native api calls instead of janky crap
+* fixed bug related to saving hlo token
+
 ## 0.4.2 (Jun 30, 2021)
 
 * hotfix for missing parenthesis part deux

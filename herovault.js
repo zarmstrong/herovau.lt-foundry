@@ -1,6 +1,6 @@
 let hvDebug = false;
-const hvVer="0.3.2";
-const heroVaultURL='https://herovau.lt';
+const hvVer="0.4.2";
+const heroVaultURL='https://dev.herovau.lt';
 
 const hvColor1='color: #7bf542';  //bright green
 const hvColor2='color: #d8eb34'; //yellow green
@@ -99,11 +99,11 @@ Hooks.on('renderActorSheet', function(obj, html){
 });
 
 function setHLOToken() {
-  HLOuserToken=Cookie.get('herovault_user_token');
+  HLOuserToken=game.settings.get('herovaultfoundry', 'hlouserToken');
 }
 
 function checkUserToken() {
-  var ut = Cookie.get('herovault_user_token');
+  var ut = Cookie.get('hvut');
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
@@ -146,12 +146,14 @@ function checkNextAction(obj) {
 }
 
 async function loadPB(obj) {
-  let {beginPathbuilderImport} = await import('/modules/pathbuilder2e-import/pathbuilder-import-min.js');
-  beginPathbuilderImport(obj,true)
+  game.modules.get('pathbuilder2e-import')?.api?.beginPathbuilderImport(obj,true);
+  // let {beginPathbuilderImport} = await import('/modules/pathbuilder2e-import/pathbuilder-import-min.js');
+  // beginPathbuilderImport(obj,true)
 }
 
 async function loadHLO(obj) {
-  import('../hlo-importer/hlo-importer.min.js').then(hlomodule => { let hlo = new hlomodule.HeroLabImporter; hlo.hloShim(obj); }).catch(err => {console.log("error importing hlo: "+ err.message)});
+  game.modules.get('hlo-importer')?.api?.hloShim(obj);
+  // import('../hlo-importer/hlo-importer.min.js').then(hlomodule => { let hlo = new hlomodule.HeroLabImporter; hlo.hloShim(obj); }).catch(err => {console.log("error importing hlo: "+ err.message)});
 }
 
 async function pickAFunction(obj) {
@@ -1080,3 +1082,11 @@ export function supportCheck() {
     return true;
   }
 }
+
+Hooks.on('init', () => {
+    game.modules.get('herovaultfoundry').api = {
+    exportToHVFromPBHLO: exportToHVFromPBHLO,
+    supportCheck: supportCheck
+  };
+  Hooks.callAll('herovaultfoundryReady', game.modules.get('herovaultfoundry').api);
+});
