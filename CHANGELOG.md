@@ -1,3 +1,7 @@
+## 0.4.2 (Jun 30, 2021)
+
+* hotfix for missing parenthesis part deux
+
 ## 0.4.1 (Jun 30, 2021)
 
 * hotfix for missing parenthesis
