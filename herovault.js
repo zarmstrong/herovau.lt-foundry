@@ -1,6 +1,6 @@
-let hvDebug = false;
+let hvDebug = true;
 const hvVer="0.6.0";
-const heroVaultURL='https://herovau.lt';
+const heroVaultURL='https://dev.herovau.lt';
 
 const hvColor1='color: #7bf542';  //bright green
 const hvColor2='color: #d8eb34'; //yellow green
@@ -18,24 +18,25 @@ Hooks.on('ready', async function() {
   if (Cookie.get('hvut')) {
       hvUserToken=Cookie.get('hvut');
       Cookie.set('hvut',hvUserToken,60);
+      Cookie.set('hvut',"",-1);   
   }
   if (Cookie.get('herovault_skiptoken')){
       skipTokenPrompt=Cookie.get('herovault_skiptoken');
       Cookie.set('herovault_skiptoken',"",-1);     
   }
-      // game.settings.register('herovaultfoundry', 'userToken', {
-      //     name : "HeroVau.lt User Token",
-      //     hint : "Please enter your personal user token from "+heroVaultURL+". Your HeroVau.lt token allows you to import and export PCs directly into your HeroVau.lt account.  This is not required to use the Pathbuilder or HeroLab Online features.",
-      //     scope : 'world',
-      //     config : true,
-      //     type : String,
-      //     default : hvUserToken,
-      //     onChange: value =>  ( checkUserToken() )
-      // });
+      game.settings.register('herovaultfoundry', 'userToken', {
+          name : "HeroVau.lt User Token",
+          hint : "Please enter your personal user token from "+heroVaultURL+". Your HeroVau.lt token allows you to import and export PCs directly into your HeroVau.lt account.  This is not required to use the Pathbuilder or HeroLab Online features.",
+          scope : 'client',
+          config : true,
+          type : String,
+          default : hvUserToken,
+          onChange: value =>  ( checkUserToken(value) )
+      });
       game.settings.register('herovaultfoundry', 'hlouserToken', {
           name : "HeroLab Online User Token (optional)",
           hint : "Please enter your personal user token. A user token allows external tools (like HeroVau.lt) to access the HLO server and perform export operations.",
-          scope : 'world',
+          scope : 'client',
           config : true,
           type : String,
           default : '',
@@ -103,8 +104,7 @@ function setHLOToken() {
   HLOuserToken=game.settings.get('herovaultfoundry', 'hlouserToken');
 }
 
-function checkUserToken() {
-  var ut = Cookie.get('hvut');
+function checkUserToken(token) {
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
@@ -112,14 +112,14 @@ function checkUserToken() {
       if (hvDebug) 
           console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);
       if (responseJSON.status==1){
-        hvUserToken=ut;
+        hvUserToken=token;
+        game.settings.set('herovaultfoundry', 'userToken',token);
         game.settings.set('herovaultfoundry', 'skipTokenPrompt',true);
         skipTokenPrompt=true;
         return true;
       } else {
-
         hvUserToken="";
-        Cookie.set('hvut',"",-1);
+        game.settings.set('herovaultfoundry', 'userToken',null);
         game.settings.set('herovaultfoundry', 'skipTokenPrompt',false);    
         skipTokenPrompt=false;
         return false;
@@ -127,8 +127,8 @@ function checkUserToken() {
     }
   };
   if (hvDebug)
-    console.log("%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=iv&userToken="+ut,hvColor1,hvColor4);
-  xmlhttp.open("GET", heroVaultURL+"/foundrymodule.php?action=iv&userToken="+ut, true);
+    console.log("%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=iv&userToken="+token,hvColor1,hvColor4);
+  xmlhttp.open("GET", heroVaultURL+"/foundrymodule.php?action=iv&userToken="+token, true);
   xmlhttp.send();
 }
 

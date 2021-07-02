@@ -1,3 +1,7 @@
+## 0.6.1 (Jul 2, 2021)
+
+* change HV user token to store via client settings instead of cookie/world
+
 ## 0.6.0 (Jun 30, 2021)
 
 * pf2e: you can now attempt to import PCs via PFS #.  Currently, it only searches for HeroVau.lt PCs that have PFS information saved on their character.
