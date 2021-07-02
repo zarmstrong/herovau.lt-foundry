@@ -1,6 +1,6 @@
 let hvDebug = false;
-const hvVer="0.6.1";
-const heroVaultURL='https://dev.herovau.lt';
+const hvVer="0.6.2";
+const heroVaultURL='https://herovau.lt';
 
 const hvColor1='color: #7bf542';  //bright green
 const hvColor2='color: #d8eb34'; //yellow green
