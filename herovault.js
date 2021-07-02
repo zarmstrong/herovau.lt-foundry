@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer="0.5.0";
+const hvVer="0.6.0";
 const heroVaultURL='https://herovau.lt';
 
 const hvColor1='color: #7bf542';  //bright green
@@ -10,6 +10,7 @@ const hvColor5='color: #ff0000'; //red
 let HLOuserToken, hvUserToken,skipTokenPrompt;
 let enableHLO=true;
 let enablePB=true;
+let pfsEnabled=true;
 
 Hooks.on('ready', async function() {
   console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);
@@ -134,6 +135,8 @@ function checkUserToken() {
 function checkNextAction(obj) {
   if(!game.modules.get('herovaultfoundry')?.active) {
     if (skipTokenPrompt) {
+      if (hvDebug)
+        console.log("%cHeroVau.lt/Foundry Bridge | %cCalling herovaultmenu",hvColor1,hvColor4);
       herovaultMenu(obj);
     } else {
       if (hvUserToken==null)
@@ -147,19 +150,17 @@ function checkNextAction(obj) {
 
 async function loadPB(obj) {
   game.modules.get('pathbuilder2e-import')?.api?.beginPathbuilderImport(obj,true);
-  // let {beginPathbuilderImport} = await import('/modules/pathbuilder2e-import/pathbuilder-import-min.js');
-  // beginPathbuilderImport(obj,true)
 }
 
 async function loadHLO(obj) {
   game.modules.get('hlo-importer')?.api?.hloShim(obj);
-  // import('../hlo-importer/hlo-importer.min.js').then(hlomodule => { let hlo = new hlomodule.HeroLabImporter; hlo.hloShim(obj); }).catch(err => {console.log("error importing hlo: "+ err.message)});
 }
 
 async function pickAFunction(obj) {
   let hloImport = false;
   let hvImport = false
   let pbImport = false;
+  let PFSPC = false;
   let dopt  = {
     width: 400,
     height: "auto"
@@ -186,6 +187,14 @@ async function pickAFunction(obj) {
     }};
     dopt.width+=100;
   }
+  if (game.system.id=="pf2e" && pfsEnabled) {
+    menuButtons= {...menuButtons, pfsimport: {
+          icon: "<i class='fas fa-search'></i>",
+          label: `Find a PFS PC`,
+          callback: () => PFSPC = true
+    }};
+    dopt.width+=100;
+  }
   menuButtons= {...menuButtons, no: {
     icon: "<i class='fas fa-times'></i>",
     label: `Cancel`
@@ -206,9 +215,9 @@ async function pickAFunction(obj) {
       } else if (hloImport) {
         loadHLO(obj)
       } else if (pbImport) {
-        // import('../pathbuilder2e-import/pathbuilder-import.js').then(pbmodule => { beginPathbuilderImport(obj) }).catch(err => {console.log("error importing pb: "+ err.message)});
         loadPB(obj);
-        // beginPathbuilderImport(obj);
+      } else if (PFSPC) {
+        pfsDialogue(obj);
       }
     }
   }, dopt).render(true);   
@@ -256,6 +265,116 @@ function importHLOChar() {}
 function importPFSChar() {}
 
 */
+function pfsDialogue(obj) {
+  let pfsnumber,pfscharnumber,searchPFS;
+    new Dialog({
+      title: `Pathfinder Society Import`,
+      content: `
+        <div>
+          <p>Enter the PFS character number you wish to search for.</p>
+          <br>
+        <div>
+        <hr/>
+        <div id="divCode">
+          PFS Number (Number before the dash)<br>
+          <div id="divOuter">
+            <div id="divInner">
+              <input id="pfsnumber" type="text" maxlength="14" />
+            </div>
+          </div>
+        </div>
+        <div id="divCode">
+          PFS Character Number (Number after the dash)<br>
+          <div id="divOuter">
+            <div id="divInner">
+              <input id="pfscharnumber" type="text" maxlength="5" value="200" />
+            </div>
+          </div>
+        </div>
+        <br><br>
+        <style>        
+          #pfsnumber {
+              border: 0px;
+              padding-left: 5px;
+              letter-spacing: 2px;
+              width: 330px;
+              min-width: 330px;
+            }
+          #pfscharnumber {
+              border: 0px;
+              padding-left: 5px;
+              letter-spacing: 2px;
+              width: 330px;
+              min-width: 330px;
+            }
+            
+            #divInner{
+              left: 0;
+              position: sticky;
+            }
+            
+            #divOuter{
+              width: 285px; 
+              overflow: hidden;
+            }
+    
+            #divCode{  
+              border: 1px solid black;
+              width: 300px;
+              margin: 0 auto;
+              padding: 5px;
+            }
+    
+        </style>
+        `,
+      buttons: {
+        yes: {
+          icon: "<i class='fas fa-check'></i>",
+          label: `Import`,
+          callback: () => searchPFS = true
+        },
+        no: {
+          icon: "<i class='fas fa-times'></i>",
+          label: `Cancel`
+        },
+      },
+      default: "yes",
+      close: html => {
+        if (searchPFS) {
+          pfsnumber= html.find('[id="pfsnumber"]')[0].value;
+          pfscharnumber= html.find('[id="pfscharnumber"]')[0].value;
+          console.log()
+          if (hvDebug) 
+              console.log("%cHeroVau.lt/Foundry Bridge | %cSearching for "+pfsnumber+"-"+pfscharnumber,hvColor1,hvColor4);
+          findPFS(obj, pfsnumber,pfscharnumber);
+        }
+      }
+    }).render(true);
+ }
+
+function findPFS(obj, pfsnumber,pfscharnumber) {
+    var hvUserToken = Cookie.get('hvut');
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        let responseJSON = JSON.parse(this.responseText);
+        if (hvDebug) 
+            console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);
+        if (Object.keys(responseJSON).length>=1){
+          if (hvDebug)
+            console.log("%cHeroVau.lt/Foundry Bridge | %cCalling createPCTable",hvColor1,hvColor4);
+            createPCTable(obj, responseJSON);
+        } else {
+          ui.notifications.error("Unable to find any results.");
+          return;
+        }
+      }
+    };
+    if (hvDebug)
+      console.log("%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=findPFS&pfsnumber="+pfsnumber+"&pfscharnumber="+pfscharnumber,hvColor1,hvColor4);
+    xmlhttp.open("GET", heroVaultURL+"/foundrymodule.php?action=findPFS&pfsnumber="+pfsnumber+"&pfscharnumber="+pfscharnumber, true);
+    xmlhttp.send();
+}
 
 function getVaultToken(callback,callbackArg1,callbackArg2,callbackArg3,callbackArg4) {
   let applyChanges=false;
@@ -357,8 +476,6 @@ async function exportToHV(targetActor) {
       console.log("%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=iv&userToken="+hvUserToken,hvColor1,hvColor4);
     xmlhttp.open("GET", heroVaultURL+"/foundrymodule.php?action=iv&userToken="+hvUserToken, true);
     xmlhttp.send();    
-
-
   } catch(e) {
     console.log(e);
   }
@@ -384,9 +501,8 @@ async function performExportToHV(targetActor) {
       } else {
         portrait=targetActor.data.img;
       }
-        if (hvDebug)
-          console.log("%cHeroVau.lt/Foundry Bridge | %cportrait includes: " + targetActor.data.img.includes("http"),hvColor1,hvColor4);
-      
+      if (hvDebug)
+        console.log("%cHeroVau.lt/Foundry Bridge | %cportrait includes: " + targetActor.data.img.includes("http"),hvColor1,hvColor4);
       if (targetActor.data.img.includes("http") == false) {
         portraitAddress=game.data.addresses.remote+targetActor.data.img.trim();
         // await targetActor.update({'data.img': portraitAddress});
@@ -578,8 +694,6 @@ function herovaultMenu(targetActor) {
   let exportPC = false;
   let PFSPC = false;
   let hloPC = false;
-  let herolabEnabled = false;
-  let pfsEnabled = false;
   let ttl=`HeroVau.lt Import`;
   let bdy=`<div><p>Please choose an action to perform:</p><div><hr/>`;
   let dopt  = {
@@ -599,20 +713,6 @@ function herovaultMenu(targetActor) {
           callback: () => exportPC = true
         },
   }
-  if (game.system.id=="pf2e" && pfsEnabled) {
-    menuButtons= {...menuButtons, pfsimport: {
-          icon: "<i class='fas fa-search'></i>",
-          label: `Find a PFS PC`,
-          callback: () => PFSPC = true
-        }};
-  }
-  if (game.system.id=="pf2e" && herolabEnabled) {
-    menuButtons= {...menuButtons, hloimport: {
-          icon: "<i class='fas fa-flask'></i>",
-          label: `Import from Herolab Online`,
-          callback: () => hloPC = true
-    }};
-  }
   menuButtons= {...menuButtons, no: {
           icon: "<i class='fas fa-times'></i>",
           label: `Cancel`
@@ -624,15 +724,13 @@ function herovaultMenu(targetActor) {
     default: "yes",
     close: html => {
       if (importPC) {
+        if (hvDebug)
+          console.log("import PC menu");
         loadPersonalVault(targetActor, hvUserToken);
       } else if (exportPC){
         if (hvDebug)
           console.log("export PC");
         exportToHV(targetActor,hvUserToken);
-      } else if (PFSPC) {
-        console.log("PFS PC");
-      } else if (hloPC) {
-        console.log("hlo PC");
       }
     }
   }, dopt).render(true); 
@@ -646,6 +744,8 @@ function exportPC(targetActor) {
 
 function beginVaultConnection(targetActor){
   if (skipTokenPrompt) {
+    if (hvDebug)
+      console.log("%cHeroVau.lt/Foundry Bridge | %cCalling herovaultMenu in beginVaultConnection",hvColor1,hvColor4);
     herovaultMenu(targetActor, hvUserToken);
   } else {
     if (hvUserToken==null)
@@ -712,11 +812,15 @@ function loadPersonalVault(targetActor){
     xmlhttp.send();
 }
 
-function createPCTable(targetActor,responseJSON){
-  var charName, charRace, charClass, charLevel, charuid, pickedCharacter, selectedCharUID;
+function createPCTable(targetActor,responseJSON) {
+  var charName, charRace, charClass, charLevel, charuid, pickedCharacter, selectedCharUID,edit;
+  let dopt = {
+    width: 650,
+    height: "auto"
+  }
   if (hvDebug)
     console.log("%cHeroVau.lt/Foundry Bridge | %cin createPCTable",hvColor1,hvColor4);
-  var htmlOut="<strong>Select a PC from the list:</strong><br><br><select name='pcid' id='pcid'>";
+  var htmlOut="<strong>Select a PC from the list:</strong><br><br><select name='pcid' id='pcid' style='width:100%;'>";
   for (var pccount=0; pccount<responseJSON.length; pccount++)
   {
     charName=responseJSON[pccount].charname;
@@ -724,7 +828,8 @@ function createPCTable(targetActor,responseJSON){
     charClass=responseJSON[pccount].charclass;
     charLevel=responseJSON[pccount].charlevel;
     charuid=responseJSON[pccount].charuid;
-    htmlOut=htmlOut+"<option value='"+charuid+"'>"+charName+": "+charRace+ " " + charClass+ " (Level "+charLevel+")</option>";
+    edit=responseJSON[pccount].edit;
+    htmlOut=htmlOut+"<option value='"+charuid+"'>"+charName+": "+charRace+ " " + charClass+ " (Level "+charLevel+") - Last edited @ "+edit+")</option>";
   }
   htmlOut=htmlOut+"</select><br>";
   new Dialog({
@@ -758,7 +863,7 @@ function createPCTable(targetActor,responseJSON){
           console.log("cancel clicked");
       }
     }
-  }).render(true);
+  }, dopt).render(true);
 
 
 }

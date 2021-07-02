@@ -1,4 +1,4 @@
-let hvDebug=false;const hvVer="0.5.0";const heroVaultURL='https://herovau.lt';const hvColor1='color: #7bf542';const hvColor2='color: #d8eb34';const hvColor3='color: #ffffff';const hvColor4='color: #cccccc';const hvColor5='color: #ff0000';let HLOuserToken,hvUserToken,skipTokenPrompt;let enableHLO=true;let enablePB=true;Hooks.on('ready',async function(){console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);if(Cookie.get('hvut')){hvUserToken=Cookie.get('hvut');Cookie.set('hvut',hvUserToken,60);}
+let hvDebug=false;const hvVer="0.6.0";const heroVaultURL='https://herovau.lt';const hvColor1='color: #7bf542';const hvColor2='color: #d8eb34';const hvColor3='color: #ffffff';const hvColor4='color: #cccccc';const hvColor5='color: #ff0000';let HLOuserToken,hvUserToken,skipTokenPrompt;let enableHLO=true;let enablePB=true;let pfsEnabled=true;Hooks.on('ready',async function(){console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);if(Cookie.get('hvut')){hvUserToken=Cookie.get('hvut');Cookie.set('hvut',hvUserToken,60);}
 if(Cookie.get('herovault_skiptoken')){skipTokenPrompt=Cookie.get('herovault_skiptoken');Cookie.set('herovault_skiptoken',"",-1);}
 game.settings.register('herovaultfoundry','hlouserToken',{name:"HeroLab Online User Token (optional)",hint:"Please enter your personal user token. A user token allows external tools (like HeroVau.lt) to access the HLO server and perform export operations.",scope:'world',config:true,type:String,default:'',onChange:value=>(setHLOToken())});game.settings.register('herovaultfoundry','debugEnabled',{name:"Enable debug mode",hint:"Debug output will be written to the js console.",scope:'world',config:true,type:Boolean,default:false,onChange:value=>(hvDebug=game.settings.get('herovaultfoundry','debugEnabled'))});game.settings.register('herovaultfoundry','skipTokenPrompt',{name:"Skip Token Prompt",hint:"Once your HeroVau.lt user token is set, you will no longer be prompted to set it. Unchecking this makes HeroVau.lt prompt you for the User Token again.",scope:'world',config:true,type:Boolean,default:false,onChange:value=>(skipTokenPrompt=game.settings.get('herovaultfoundry','skipTokenPrompt'))});hvDebug=game.settings.get('herovaultfoundry','debugEnabled');HLOuserToken=game.settings.get('herovaultfoundry','hlouserToken');hvUserToken=Cookie.get('hvut');skipTokenPrompt=game.settings.get('herovaultfoundry','skipTokenPrompt');});Hooks.on('renderActorSheet',function(obj,html){const actor=obj.actor;const v8=HVversionCompare(game.data.version,'0.8.5');if(hvDebug){if(v8==1)
 console.log("%cHeroVau.lt/Foundry Bridge | %cCan user modify: "+actor.canUserModify(game.user,"update"),hvColor1,hvColor4);else
@@ -10,19 +10,85 @@ if(game.modules.get('pathbuilder2e-import')?.active&&enablePB){$("a:contains('Im
 function checkUserToken(){var ut=Cookie.get('hvut');var xmlhttp=new XMLHttpRequest();xmlhttp.onreadystatechange=function(){if(this.readyState==4&&this.status==200){let responseJSON=JSON.parse(this.responseText);if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);if(responseJSON.status==1){hvUserToken=ut;game.settings.set('herovaultfoundry','skipTokenPrompt',true);skipTokenPrompt=true;return true;}else{hvUserToken="";Cookie.set('hvut',"",-1);game.settings.set('herovaultfoundry','skipTokenPrompt',false);skipTokenPrompt=false;return false;}}};if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=iv&userToken="+ut,hvColor1,hvColor4);xmlhttp.open("GET",heroVaultURL+"/foundrymodule.php?action=iv&userToken="+ut,true);xmlhttp.send();}
-function checkNextAction(obj){if(!game.modules.get('herovaultfoundry')?.active){if(skipTokenPrompt){herovaultMenu(obj);}else{if(hvUserToken==null)
+function checkNextAction(obj){if(!game.modules.get('herovaultfoundry')?.active){if(skipTokenPrompt){if(hvDebug)
+console.log("%cHeroVau.lt/Foundry Bridge | %cCalling herovaultmenu",hvColor1,hvColor4);herovaultMenu(obj);}else{if(hvUserToken==null)
 hvUserToken="";getVaultToken(herovaultMenu,targetActor);}}else{pickAFunction(obj);}}
 async function loadPB(obj){game.modules.get('pathbuilder2e-import')?.api?.beginPathbuilderImport(obj,true);}
 async function loadHLO(obj){game.modules.get('hlo-importer')?.api?.hloShim(obj);}
 async function pickAFunction(obj){let hloImport=false;let hvImport=false
-let pbImport=false;let dopt={width:400,height:"auto"}
+let pbImport=false;let PFSPC=false;let dopt={width:400,height:"auto"}
 let menuButtons={heroVaultImport:{icon:"<i class='fas fa-cloud'></i>",label:`HeroVau.lt Import/Export`,callback:()=>hvImport=true}};if(game.system.id=="pf2e"&&game.modules.get('hlo-importer')?.active&&enableHLO){menuButtons={...menuButtons,hloimport:{icon:"<i class='fas fa-flask'></i>",label:`Import from Herolab Online`,callback:()=>hloImport=true}};dopt.width+=100;}
 if(game.system.id=="pf2e"&&game.modules.get('pathbuilder2e-import')?.active&&enablePB){menuButtons={...menuButtons,pbimport:{icon:"<i class='fas fa-check'></i>",label:`Import from Pathbuilder 2e`,callback:()=>pbImport=true}};dopt.width+=100;}
+if(game.system.id=="pf2e"&&pfsEnabled){menuButtons={...menuButtons,pfsimport:{icon:"<i class='fas fa-search'></i>",label:`Find a PFS PC`,callback:()=>PFSPC=true}};dopt.width+=100;}
 menuButtons={...menuButtons,no:{icon:"<i class='fas fa-times'></i>",label:`Cancel`}};new Dialog({title:`HeroVau.lt Import`,content:`
       <div>
         <p>Please select the importer you'd like to use from the options below.</p>
       <div>
-      <hr/>`,buttons:menuButtons,default:"no",close:html=>{if(hvImport){beginVaultConnection(obj);}else if(hloImport){loadHLO(obj)}else if(pbImport){loadPB(obj);}}},dopt).render(true);}
+      <hr/>`,buttons:menuButtons,default:"no",close:html=>{if(hvImport){beginVaultConnection(obj);}else if(hloImport){loadHLO(obj)}else if(pbImport){loadPB(obj);}else if(PFSPC){pfsDialogue(obj);}}},dopt).render(true);}
+function pfsDialogue(obj){let pfsnumber,pfscharnumber,searchPFS;new Dialog({title:`Pathfinder Society Import`,content:`
+        <div>
+          <p>Enter the PFS character number you wish to search for.</p>
+          <br>
+        <div>
+        <hr/>
+        <div id="divCode">
+          PFS Number (Number before the dash)<br>
+          <div id="divOuter">
+            <div id="divInner">
+              <input id="pfsnumber" type="text" maxlength="14" />
+            </div>
+          </div>
+        </div>
+        <div id="divCode">
+          PFS Character Number (Number after the dash)<br>
+          <div id="divOuter">
+            <div id="divInner">
+              <input id="pfscharnumber" type="text" maxlength="5" value="200" />
+            </div>
+          </div>
+        </div>
+        <br><br>
+        <style>        
+          #pfsnumber {
+              border: 0px;
+              padding-left: 5px;
+              letter-spacing: 2px;
+              width: 330px;
+              min-width: 330px;
+            }
+          #pfscharnumber {
+              border: 0px;
+              padding-left: 5px;
+              letter-spacing: 2px;
+              width: 330px;
+              min-width: 330px;
+            }
+            
+            #divInner{
+              left: 0;
+              position: sticky;
+            }
+            
+            #divOuter{
+              width: 285px; 
+              overflow: hidden;
+            }
+    
+            #divCode{  
+              border: 1px solid black;
+              width: 300px;
+              margin: 0 auto;
+              padding: 5px;
+            }
+    
+        </style>
+        `,buttons:{yes:{icon:"<i class='fas fa-check'></i>",label:`Import`,callback:()=>searchPFS=true},no:{icon:"<i class='fas fa-times'></i>",label:`Cancel`},},default:"yes",close:html=>{if(searchPFS){pfsnumber=html.find('[id="pfsnumber"]')[0].value;pfscharnumber=html.find('[id="pfscharnumber"]')[0].value;console.log()
+if(hvDebug)
+console.log("%cHeroVau.lt/Foundry Bridge | %cSearching for "+pfsnumber+"-"+pfscharnumber,hvColor1,hvColor4);findPFS(obj,pfsnumber,pfscharnumber);}}}).render(true);}
+function findPFS(obj,pfsnumber,pfscharnumber){var hvUserToken=Cookie.get('hvut');var xmlhttp=new XMLHttpRequest();xmlhttp.onreadystatechange=function(){if(this.readyState==4&&this.status==200){let responseJSON=JSON.parse(this.responseText);if(hvDebug)
+console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);if(Object.keys(responseJSON).length>=1){if(hvDebug)
+console.log("%cHeroVau.lt/Foundry Bridge | %cCalling createPCTable",hvColor1,hvColor4);createPCTable(obj,responseJSON);}else{ui.notifications.error("Unable to find any results.");return;}}};if(hvDebug)
+console.log("%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=findPFS&pfsnumber="+pfsnumber+"&pfscharnumber="+pfscharnumber,hvColor1,hvColor4);xmlhttp.open("GET",heroVaultURL+"/foundrymodule.php?action=findPFS&pfsnumber="+pfsnumber+"&pfscharnumber="+pfscharnumber,true);xmlhttp.send();}
 function getVaultToken(callback,callbackArg1,callbackArg2,callbackArg3,callbackArg4){let applyChanges=false;if(hvUserToken==null)
 hvUserToken="";new Dialog({title:`HeroVau.lt Import`,content:`
       <div>
@@ -93,16 +159,16 @@ console.log("%cHeroVau.lt/Foundry Bridge | %chttps://herovau.lt/foundrymodule.ph
 action='importNewPC';else
 action='importExistingPC';const gameSystem=game.data.system.id;let pcEncodedJSON=encodeURIComponent(JSON.stringify(targetActor.data));var xmlhttp=new XMLHttpRequest();xmlhttp.onreadystatechange=function(){if(this.readyState==4&&this.status==200){let responseJSON=JSON.parse(this.responseText);if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);resolve(responseJSON);}};xmlhttp.open("POST",heroVaultURL+"/foundrymodule.php",true);xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");xmlhttp.send('action='+action+'&userToken='+userToken+'&encodedChar='+pcEncodedJSON+'&gamesystem='+gameSystem+'&charUID='+charUID+'&portraitAddress='+encodeURIComponent(portraitAddress)+'&tokenAddress='+encodeURIComponent(tokenAddress));});}
-function herovaultMenu(targetActor){let importPC=false;let exportPC=false;let PFSPC=false;let hloPC=false;let herolabEnabled=false;let pfsEnabled=false;let ttl=`HeroVau.lt Import`;let bdy=`<div><p>Please choose an action to perform:</p><div><hr/>`;let dopt={width:650,height:"auto"}
+function herovaultMenu(targetActor){let importPC=false;let exportPC=false;let PFSPC=false;let hloPC=false;let ttl=`HeroVau.lt Import`;let bdy=`<div><p>Please choose an action to perform:</p><div><hr/>`;let dopt={width:650,height:"auto"}
 let menuButtons={import:{icon:"<i class='fas fa-file-import'></i>",label:`Import from HeroVau.lt`,callback:()=>importPC=true},export:{icon:"<i class='fas fa-file-export'></i>",label:`Export to HeroVau.lt`,callback:()=>exportPC=true},}
-if(game.system.id=="pf2e"&&pfsEnabled){menuButtons={...menuButtons,pfsimport:{icon:"<i class='fas fa-search'></i>",label:`Find a PFS PC`,callback:()=>PFSPC=true}};}
-if(game.system.id=="pf2e"&&herolabEnabled){menuButtons={...menuButtons,hloimport:{icon:"<i class='fas fa-flask'></i>",label:`Import from Herolab Online`,callback:()=>hloPC=true}};}
 menuButtons={...menuButtons,no:{icon:"<i class='fas fa-times'></i>",label:`Cancel`}}
-new Dialog({title:ttl,content:bdy,buttons:menuButtons,default:"yes",close:html=>{if(importPC){loadPersonalVault(targetActor,hvUserToken);}else if(exportPC){if(hvDebug)
-console.log("export PC");exportToHV(targetActor,hvUserToken);}else if(PFSPC){console.log("PFS PC");}else if(hloPC){console.log("hlo PC");}}},dopt).render(true);}
+new Dialog({title:ttl,content:bdy,buttons:menuButtons,default:"yes",close:html=>{if(importPC){if(hvDebug)
+console.log("import PC menu");loadPersonalVault(targetActor,hvUserToken);}else if(exportPC){if(hvDebug)
+console.log("export PC");exportToHV(targetActor,hvUserToken);}}},dopt).render(true);}
 function exportPC(targetActor){let applyChanges=false;if(hvUserToken==null)
 hvUserToken="";}
-function beginVaultConnection(targetActor){if(skipTokenPrompt){herovaultMenu(targetActor,hvUserToken);}else{if(hvUserToken==null)
+function beginVaultConnection(targetActor){if(skipTokenPrompt){if(hvDebug)
+console.log("%cHeroVau.lt/Foundry Bridge | %cCalling herovaultMenu in beginVaultConnection",hvColor1,hvColor4);herovaultMenu(targetActor,hvUserToken);}else{if(hvUserToken==null)
 hvUserToken="";getVaultToken(herovaultMenu,targetActor,hvUserToken);}}
 function loadPersonalVault(targetActor){const gameSystem=game.data.system.id;let error=false;var xmlhttp=new XMLHttpRequest();xmlhttp.onreadystatechange=function(){if(this.readyState==4&&this.status==200){let responseJSON=JSON.parse(this.responseText);if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %c"+responseJSON,hvColor1,hvColor4);if(responseJSON.hasOwnProperty("error")){if(hvDebug)
@@ -117,15 +183,16 @@ console.log("%cHeroVau.lt/Foundry Bridge | %c"+Object.keys(responseJSON).length,
 else{if(Object.keys(responseJSON).length>=1){if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %cCalling checkHLOCharacterIsCorrect",hvColor1,hvColor4);createPCTable(targetActor,responseJSON);}else{ui.notifications.warn("Unable to load vault.  Please double-check your User Token.");game.settings.set('herovaultfoundry','skipTokenPrompt',false);getVaultToken(loadPersonalVault,targetActor,hvUserToken);return;}}}};if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %cusertoken: "+hvUserToken,hvColor1,hvColor4);xmlhttp.open("GET",heroVaultURL+"/foundrymodule.php?action=getvault&gamesystem="+encodeURIComponent(gameSystem)+"&hvVer="+hvVer+"&userToken="+encodeURIComponent(hvUserToken),true);xmlhttp.send();}
-function createPCTable(targetActor,responseJSON){var charName,charRace,charClass,charLevel,charuid,pickedCharacter,selectedCharUID;if(hvDebug)
-console.log("%cHeroVau.lt/Foundry Bridge | %cin createPCTable",hvColor1,hvColor4);var htmlOut="<strong>Select a PC from the list:</strong><br><br><select name='pcid' id='pcid'>";for(var pccount=0;pccount<responseJSON.length;pccount++)
-{charName=responseJSON[pccount].charname;charRace=responseJSON[pccount].charrace;charClass=responseJSON[pccount].charclass;charLevel=responseJSON[pccount].charlevel;charuid=responseJSON[pccount].charuid;htmlOut=htmlOut+"<option value='"+charuid+"'>"+charName+": "+charRace+" "+charClass+" (Level "+charLevel+")</option>";}
+function createPCTable(targetActor,responseJSON){var charName,charRace,charClass,charLevel,charuid,pickedCharacter,selectedCharUID,edit;let dopt={width:650,height:"auto"}
+if(hvDebug)
+console.log("%cHeroVau.lt/Foundry Bridge | %cin createPCTable",hvColor1,hvColor4);var htmlOut="<strong>Select a PC from the list:</strong><br><br><select name='pcid' id='pcid' style='width:100%;'>";for(var pccount=0;pccount<responseJSON.length;pccount++)
+{charName=responseJSON[pccount].charname;charRace=responseJSON[pccount].charrace;charClass=responseJSON[pccount].charclass;charLevel=responseJSON[pccount].charlevel;charuid=responseJSON[pccount].charuid;edit=responseJSON[pccount].edit;htmlOut=htmlOut+"<option value='"+charuid+"'>"+charName+": "+charRace+" "+charClass+" (Level "+charLevel+") - Last edited @ "+edit+")</option>";}
 htmlOut=htmlOut+"</select><br>";new Dialog({title:"Importable Character List",content:`
       <div>`+htmlOut+`</div><br><br>
       `,buttons:{yes:{icon:"<i class='fas fa-check'></i>",label:`Proceed`,callback:()=>pickedCharacter=true},no:{icon:"<i class='fas fa-times'></i>",label:`Cancel`,callback:()=>pickedCharacter=false},},default:"yes",close:html=>{if(pickedCharacter){if(hvDebug)
 console.log("yes clicked");selectedCharUID=html.find('[id="pcid"]')[0].value;if(hvDebug)
 console.log("Selected PC id: "+selectedCharUID);requestCharacter(targetActor,selectedCharUID);}else{if(hvDebug)
-console.log("cancel clicked");}}}).render(true);}
+console.log("cancel clicked");}}},dopt).render(true);}
 function requestCharacter(targetActor,charUID){let error=false;var xmlhttp=new XMLHttpRequest();xmlhttp.onreadystatechange=function(){if(this.readyState==4&&this.status==200){let responseJSON=JSON.parse(this.responseText);if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %c"+responseJSON,hvColor1,hvColor4);if(responseJSON.hasOwnProperty("error")){if(hvDebug)
 console.log("%cHeroVau.lt/Foundry Bridge | %cerror found in response",hvColor1,hvColor4);error=true;}
