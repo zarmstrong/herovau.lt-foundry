@@ -1,3 +1,9 @@
+## 0.6.2 (Jul 2, 2021)
+
+* fix cookie/usertoken issues
+* fix bug where non-existant characters would think they are existant characters and prompt for overwrite.
+* fixed charuid not being added to actor in some cases
+
 ## 0.6.1 (Jul 2, 2021)
 
 * change HV user token to store via client settings instead of cookie/world

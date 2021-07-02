@@ -1,6 +1,6 @@
 let hvDebug = false;
 const hvVer="0.6.1";
-const heroVaultURL='https://herovau.lt';
+const heroVaultURL='https://dev.herovau.lt';
 
 const hvColor1='color: #7bf542';  //bright green
 const hvColor2='color: #d8eb34'; //yellow green
@@ -16,12 +16,13 @@ Hooks.on('ready', async function() {
   console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);
 
   if (Cookie.get('hvut')) {
-      hvUserToken=Cookie.get('hvut');
-      Cookie.set('hvut',hvUserToken,60);
+      game.settings.set('herovaultfoundry', 'userToken',Cookie.get('hvut'));
+      hvUserToken=game.settings.get('herovaultfoundry', 'userToken')
       Cookie.set('hvut',"",-1);   
   }
   if (Cookie.get('herovault_skiptoken')){
       skipTokenPrompt=Cookie.get('herovault_skiptoken');
+      game.settings.set('herovaultfoundry', 'userToken',skipTokenPrompt);
       Cookie.set('herovault_skiptoken',"",-1);     
   }
       game.settings.register('herovaultfoundry', 'userToken', {
@@ -31,7 +32,7 @@ Hooks.on('ready', async function() {
           config : true,
           type : String,
           default : hvUserToken,
-          onChange: value =>  ( checkUserToken(value) )
+          // onChange: value =>  ( )
       });
       game.settings.register('herovaultfoundry', 'hlouserToken', {
           name : "HeroLab Online User Token (optional)",
@@ -62,7 +63,7 @@ Hooks.on('ready', async function() {
       });
   hvDebug=game.settings.get('herovaultfoundry', 'debugEnabled');
   HLOuserToken=game.settings.get('herovaultfoundry', 'hlouserToken');
-  hvUserToken=Cookie.get('hvut');
+  hvUserToken=game.settings.get('herovaultfoundry', 'userToken');
   skipTokenPrompt=game.settings.get('herovaultfoundry', 'skipTokenPrompt');
 });
 
@@ -110,7 +111,7 @@ function checkUserToken(token) {
     if (this.readyState == 4 && this.status == 200) {
       let responseJSON = JSON.parse(this.responseText);
       if (hvDebug) 
-          console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);
+          console.log("%cHeroVau.lt/Foundry Bridge | %ccheckUserToken: "+JSON.stringify(responseJSON),hvColor1,hvColor4);
       if (responseJSON.status==1){
         hvUserToken=token;
         game.settings.set('herovaultfoundry', 'userToken',token);
@@ -343,7 +344,6 @@ function pfsDialogue(obj) {
         if (searchPFS) {
           pfsnumber= html.find('[id="pfsnumber"]')[0].value;
           pfscharnumber= html.find('[id="pfscharnumber"]')[0].value;
-          console.log()
           if (hvDebug) 
               console.log("%cHeroVau.lt/Foundry Bridge | %cSearching for "+pfsnumber+"-"+pfscharnumber,hvColor1,hvColor4);
           findPFS(obj, pfsnumber,pfscharnumber);
@@ -353,7 +353,7 @@ function pfsDialogue(obj) {
  }
 
 function findPFS(obj, pfsnumber,pfscharnumber) {
-    var hvUserToken = Cookie.get('hvut');
+    var hvUserToken = game.settings.get('herovaultfoundry', 'userToken');
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
       if (this.readyState == 4 && this.status == 200) {
@@ -442,7 +442,8 @@ function getVaultToken(callback,callbackArg1,callbackArg2,callbackArg3,callbackA
         let userToken= html.find('[id="textBoxUserToken"]')[0].value;
         let skipToken= html.find('[id="skipToken"]')[0].checked;
         // console.log("saving hvut " + userToken);
-        Cookie.set('hvut',userToken,60);
+        // game.settings.set('herovaultfoundry', 'userToken',userToken);
+        checkUserToken(userToken);
         hvUserToken=userToken;
         if (skipToken)
           game.settings.set('herovaultfoundry', 'skipTokenPrompt',true);
@@ -454,18 +455,18 @@ function getVaultToken(callback,callbackArg1,callbackArg2,callbackArg3,callbackA
 
 async function exportToHV(targetActor) {
   try {
-    var hvUserToken = Cookie.get('hvut');
+    var hvUserToken = game.settings.get('herovaultfoundry', 'userToken');
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
       if (this.readyState == 4 && this.status == 200) {
         let responseJSON = JSON.parse(this.responseText);
         if (hvDebug) 
-            console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);
+          console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);
         if (responseJSON.status==1){
           performExportToHV(targetActor);
         } else {
           hvUserToken="";
-          Cookie.set('hvut',"",-1);
+          game.settings.set('herovaultfoundry', 'userToken',null);
           ui.notifications.warn("Unable to load vault.  Please double-check your User Token.");
           game.settings.set('herovaultfoundry', 'skipTokenPrompt',false);
           getVaultToken(exportToHV,targetActor, hvUserToken);
@@ -490,7 +491,7 @@ async function performExportToHV(targetActor) {
     let canOverwrite = false;
     let portrait,hvUID,portraitAddress,tokenAddress;
 
-    hvUserToken=Cookie.get('hvut');
+    hvUserToken=game.settings.get('herovaultfoundry', 'userToken');
     portrait="icons/svg/mystery-man.svg";
     if (targetActor.data.img != undefined && targetActor.data.token.img != undefined ) {
       if (targetActor.data.img.includes("mystery-man") == -1)
@@ -526,8 +527,8 @@ async function performExportToHV(targetActor) {
 
     if (hasProperty(targetActor,"data.flags.herovault.uid")) {
       hvUID=targetActor.data.flags.herovault.uid;
-      let accChk = checkForAccess(hvUserToken,hvUID);
-      canOverwrite=accChk;
+      let accChk = await checkForAccess(hvUserToken,hvUID);
+      canOverwrite=accChk.canAccess;
       // Promise.resolve(checkForAccess(hvUserToken,hvUID)).then( res => canOverwrite=res);
     }
     vaultInfo = await getVaultSlots(hvUserToken);
@@ -541,7 +542,7 @@ async function performExportToHV(targetActor) {
     let bdy=`<div><p>You have ${freeSlots}/${totalSlots} character slots free.</p><div><hr/>`;
     
     if (hvDebug)
-      console.log("%cHeroVau.lt/Foundry Bridge | %ccan access?: " + canOverwrite,hvColor1,hvColor4);
+      console.log("%cHeroVau.lt/Foundry Bridge | %ccan access/overwrite?: " + canOverwrite,hvColor1,hvColor4);
     if (freeSlots <1 && canOverwrite==false){
       bdy=`<div><p>Unfortunately you do not have enough open slots in your <a href="https://herovau.lt">HeroVau.lt</a> to import this PC.<br>Please upgrade your account or delete a PC from your account to free up some space.</p><div><hr/>`;
 
@@ -594,6 +595,9 @@ async function performExportToHV(targetActor) {
             if (exportStatus.error== true) {
               ui.notifications.error("Error exporting: " + exportStatus.message);
             } else {
+              targetActor.update({
+                'flags.herovault.uid':exportStatus.charhash
+              });
               ui.notifications.info(exportStatus.message);
             }
           } else if (exportOverwritePC){
@@ -603,6 +607,9 @@ async function performExportToHV(targetActor) {
             if (exportStatus.error== true) {
               ui.notifications.error("Error exporting: " + exportStatus.message);
             } else {
+              targetActor.update({
+                'flags.herovault.uid':exportStatus.charhash
+              });
               ui.notifications.info(exportStatus.message);
             }
           }
@@ -676,6 +683,7 @@ const exportPCtoHV = (targetActor, userToken,charUID,importAsNew, portraitAddres
     xmlhttp.onreadystatechange = function() {
       if (this.readyState == 4 && this.status == 200) {
         let responseJSON = JSON.parse(this.responseText);
+        console.log(responseJSON)
         if (hvDebug) 
           console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);
         resolve(responseJSON);
