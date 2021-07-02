@@ -14,55 +14,62 @@ let pfsEnabled=true;
 
 Hooks.on('ready', async function() {
   console.log("%cHeroVau.lt/Foundry Bridge | %cinitializing",hvColor1,hvColor4);
+  game.settings.register('herovaultfoundry', 'userToken', {
+      name : "HeroVau.lt User Token",
+      hint : "Please enter your personal user token from "+heroVaultURL+". Your HeroVau.lt token allows you to import and export PCs directly into your HeroVau.lt account.  This is not required to use the Pathbuilder or HeroLab Online features.",
+      scope : 'client',
+      config : true,
+      type : String,
+      default : hvUserToken
+      // onChange: value =>  ( checkUserToken(value) )
+  });
+  game.settings.register('herovaultfoundry', 'hlouserToken', {
+      name : "HeroLab Online User Token (optional)",
+      hint : "Please enter your personal user token. A user token allows external tools (like HeroVau.lt) to access the HLO server and perform export operations.",
+      scope : 'client',
+      config : true,
+      type : String,
+      default : '',
+      onChange: value =>  (setHLOToken())
+  });
+  game.settings.register('herovaultfoundry', 'debugEnabled', {
+      name : "Enable debug mode",
+      hint : "Debug output will be written to the js console.",
+      scope : 'world',
+      config : true,
+      type: Boolean,
+      default: false,
+      onChange: value => (hvDebug=game.settings.get('herovaultfoundry', 'debugEnabled'))
+  });
+  game.settings.register('herovaultfoundry', 'skipTokenPrompt', {
+      name : "Skip Token Prompt",
+      hint : "Once your HeroVau.lt user token is set, you will no longer be prompted to set it. Unchecking this makes HeroVau.lt prompt you for the User Token again.",
+      scope : 'world',
+      config : true,
+      type: Boolean,
+      default: false,
+      onChange: value => (skipTokenPrompt=game.settings.get('herovaultfoundry', 'skipTokenPrompt'))
+  });
 
   if (Cookie.get('hvut')) {
       hvUserToken=Cookie.get('hvut');
-      Cookie.set('hvut',hvUserToken,60);
+      // Cookie.set('hvut',hvUserToken,60);
       Cookie.set('hvut',"",-1);   
+      game.settings.set('herovaultfoundry', 'userToken',hvUserToken);
+  } else if (Cookie.get('herovault_user_token')) {
+      hvUserToken=Cookie.get('herovault_user_token');
+      // Cookie.set('herovault_user_token',hvUserToken,60);
+      Cookie.set('herovault_user_token',"",-1);   
+      game.settings.set('herovaultfoundry', 'userToken',hvUserToken);
   }
+
   if (Cookie.get('herovault_skiptoken')){
       skipTokenPrompt=Cookie.get('herovault_skiptoken');
       Cookie.set('herovault_skiptoken',"",-1);     
   }
-      game.settings.register('herovaultfoundry', 'userToken', {
-          name : "HeroVau.lt User Token",
-          hint : "Please enter your personal user token from "+heroVaultURL+". Your HeroVau.lt token allows you to import and export PCs directly into your HeroVau.lt account.  This is not required to use the Pathbuilder or HeroLab Online features.",
-          scope : 'client',
-          config : true,
-          type : String,
-          default : hvUserToken,
-          onChange: value =>  ( checkUserToken(value) )
-      });
-      game.settings.register('herovaultfoundry', 'hlouserToken', {
-          name : "HeroLab Online User Token (optional)",
-          hint : "Please enter your personal user token. A user token allows external tools (like HeroVau.lt) to access the HLO server and perform export operations.",
-          scope : 'client',
-          config : true,
-          type : String,
-          default : '',
-          onChange: value =>  (setHLOToken())
-      });
-      game.settings.register('herovaultfoundry', 'debugEnabled', {
-          name : "Enable debug mode",
-          hint : "Debug output will be written to the js console.",
-          scope : 'world',
-          config : true,
-          type: Boolean,
-          default: false,
-          onChange: value => (hvDebug=game.settings.get('herovaultfoundry', 'debugEnabled'))
-      });
-      game.settings.register('herovaultfoundry', 'skipTokenPrompt', {
-          name : "Skip Token Prompt",
-          hint : "Once your HeroVau.lt user token is set, you will no longer be prompted to set it. Unchecking this makes HeroVau.lt prompt you for the User Token again.",
-          scope : 'world',
-          config : true,
-          type: Boolean,
-          default: false,
-          onChange: value => (skipTokenPrompt=game.settings.get('herovaultfoundry', 'skipTokenPrompt'))
-      });
   hvDebug=game.settings.get('herovaultfoundry', 'debugEnabled');
   HLOuserToken=game.settings.get('herovaultfoundry', 'hlouserToken');
-  hvUserToken=Cookie.get('hvut');
+  hvUserToken= game.settings.get('herovaultfoundry', 'userToken')
   skipTokenPrompt=game.settings.get('herovaultfoundry', 'skipTokenPrompt');
 });
 
@@ -353,7 +360,7 @@ function pfsDialogue(obj) {
  }
 
 function findPFS(obj, pfsnumber,pfscharnumber) {
-    var hvUserToken = Cookie.get('hvut');
+    // var hvUserToken = Cookie.get('hvut');
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
       if (this.readyState == 4 && this.status == 200) {
@@ -454,7 +461,7 @@ function getVaultToken(callback,callbackArg1,callbackArg2,callbackArg3,callbackA
 
 async function exportToHV(targetActor) {
   try {
-    var hvUserToken = Cookie.get('hvut');
+    // var hvUserToken = Cookie.get('hvut');
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
       if (this.readyState == 4 && this.status == 200) {
@@ -490,7 +497,7 @@ async function performExportToHV(targetActor) {
     let canOverwrite = false;
     let portrait,hvUID,portraitAddress,tokenAddress;
 
-    hvUserToken=Cookie.get('hvut');
+    // hvUserToken=Cookie.get('hvut');
     portrait="icons/svg/mystery-man.svg";
     if (targetActor.data.img != undefined && targetActor.data.token.img != undefined ) {
       if (targetActor.data.img.includes("mystery-man") == -1)
@@ -590,7 +597,7 @@ async function performExportToHV(targetActor) {
         close: async (html) => {
           if (exportNewPC) {
             hvUID="";
-            let exportStatus = await exportPCtoHV(targetActor, hvUserToken, hvUID, true, portraitAddress,tokenAddress);
+            let exportStatus = await exportPCtoHVSlug(targetActor, hvUserToken, hvUID, true, portraitAddress,tokenAddress);
             if (exportStatus.error== true) {
               ui.notifications.error("Error exporting: " + exportStatus.message);
             } else {
@@ -599,7 +606,7 @@ async function performExportToHV(targetActor) {
           } else if (exportOverwritePC){
             if (hvDebug)
               console.log("export overwrite PC");
-            let exportStatus = await exportPCtoHV(targetActor, hvUserToken, hvUID, false, portraitAddress,tokenAddress);
+            let exportStatus = await exportPCtoHVSlug(targetActor, hvUserToken, hvUID, false, portraitAddress,tokenAddress);
             if (exportStatus.error== true) {
               ui.notifications.error("Error exporting: " + exportStatus.message);
             } else {
@@ -688,6 +695,72 @@ const exportPCtoHV = (targetActor, userToken,charUID,importAsNew, portraitAddres
   });
 }
 
+const exportPCtoHVSlug = (targetActor, userToken,charUID,importAsNew, portraitAddress,tokenAddress) => {
+  return new Promise((resolve) => {
+    let error=false;
+    let action='';
+    if (importAsNew)
+      action='importNewPC';
+    else
+      action='importExistingPC';
+
+    const gameSystem=game.data.system.id;
+    let theseItems =targetActor.items;
+    let itemExport=[];
+    console.log(theseItems);
+    theseItems.forEach((v,k)=>{
+      const item=v.data;
+      console.log("item: "+item.name+" type: "+item.type);
+      if (item.type=="lore") {
+        let loreItem = {'id':item._id, 'type': 'lore','name': item.name,'proficient':item.data.proficient.value};
+        itemExport.push(loreItem);
+      } else if (item.type =="spellcastingEntry") {
+        let spellSlotData={'0':item.data.slots.slot0.max,'1':item.data.slots.slot1.max,'2':item.data.slots.slot2.max,'3':item.data.slots.slot3.max,'4':item.data.slots.slot4.max,'5':item.data.slots.slot5.max,'6':item.data.slots.slot6.max,'7':item.data.slots.slot7.max,'8':item.data.slots.slot8.max,'9':item.data.slots.slot9.max,'10':item.data.slots.slot10.max,'11':item.data.slots.slot11.max};
+        let spellCastingEntryItem = {'id':item._id,'type': 'spellcastingEntry','name': item.name,'slug': item.data.slug,'ability': item.data.ability.value,'proficiency':item.data.proficiency.value,'focusPoints': item.data.focus.points,'tradition': item.data.tradition.value,'prepared': item.data.prepared.value,'showunprep': item.data.showUnpreparedSpells.value, 'spellSlots':spellSlotData};
+        itemExport.push(spellCastingEntryItem);
+      } else if (item.type =="spell") {
+        let spellItem = {'id':item._id,'type': 'spell','name': item.name,'slug': item.data.slug, 'prepared':item.data.prepared.value, 'level': item.data.level.value,'location': item.data.location.value,};
+        itemExport.push(spellItem);
+      } else if (item.type =="armor") {
+        let armorWeaponItem = {'id':item._id,'type': 'armor','name': item.name,'slug': item.data.slug,'potencyRune': item.data.potencyRune.value,'preciousMaterial':item.data.preciousMaterial.value, 'preciousMaterialGrade':item.data.preciousMaterialGrade.value, 'price':item.data.price.value, 'propertyRune1':item.data.propertyRune1.value, 'propertyRune2':item.data.propertyRune2.value, 'propertyRune3':item.data.propertyRune3.value,'propertyRune4':item.data.propertyRune4.value, 'resiliencyRune':item.data.resiliencyRune.value, 'propertyRune4':item.data.propertyRune4.value,'quantity': item.data.quantity.value,'equipped': item.data.equipped.value,'invested':item.data.invested.value, 'containerid': item.data.containerId.value, 'identified':item.data.identification.status };
+        itemExport.push(armorWeaponItem);
+      } else if (item.type =="weapon") {
+        let armorWeaponItem = {'id':item._id,'type': 'armor','name': item.name,'slug': item.data.slug,'potencyRune': item.data.potencyRune.value,'preciousMaterial':item.data.preciousMaterial.value, 'preciousMaterialGrade':item.data.preciousMaterialGrade.value, 'price':item.data.price.value, 'propertyRune1':item.data.propertyRune1.value, 'propertyRune2':item.data.propertyRune2.value, 'propertyRune3':item.data.propertyRune3.value,'propertyRune4':item.data.propertyRune4.value, 'propertyRune4':item.data.propertyRune4.value,'quantity': item.data.quantity.value,'equipped': item.data.equipped.value,'invested':item.data.invested.value, 'containerid': item.data.containerId.value, 'identified':item.data.identification.status };
+        itemExport.push(armorWeaponItem);
+      } else if (item.type =="consumable" || item.type =="equipment"|| item.type =="treasure"|| item.type =="backpack"){
+        let thisItem = {'id':item._id, 'type': item.type,'name': item.name,'slug': item.data.slug, 'quantity': item.data.quantity.value,'equipped': item.data.equipped.value,'invested':item.data.invested.value, 'containerid': item.data.containerId.value, 'identified':item.data.identification.status};
+        itemExport.push(thisItem);
+      } else if (item.type =="feat"){
+        let thisItem = {'id':item._id, 'type': item.type,'name': item.name,'slug': item.data.slug,'level': item.data.level.value,'location': item.data.location};
+        itemExport.push(thisItem)
+      } else if (item.type =="background" || item.type =="ancestry"|| item.type =="class"){
+        let thisItem = {'id':item._id, 'type': item.type,'name': item.name,'slug': item.data.slug};
+        itemExport.push(thisItem)
+      } else {
+        let thisItem ={'id':item._id, 'type': item.type,'name': item.name,'slug': item.data.slug};
+        itemExport.push(thisItem)
+      }
+    });
+    console.log(itemExport);
+    var slugActor=jQuery.extend(true, {}, targetActor.data);
+    slugActor.items=[itemExport];
+    console.log(JSON.stringify(slugActor));
+    let pcEncodedJSON=encodeURIComponent(JSON.stringify(slugActor));
+    var xmlhttp = new XMLHttpRequest();
+    // xmlhttp.onreadystatechange = function() {
+    //   if (this.readyState == 4 && this.status == 200) {
+    //     let responseJSON = JSON.parse(this.responseText);
+    //     if (hvDebug) 
+    //       console.log("%cHeroVau.lt/Foundry Bridge | %c"+JSON.stringify(responseJSON),hvColor1,hvColor4);
+    //     resolve(responseJSON);
+    //   }
+    // };
+    // // console.log("%cHeroVau.lt/Foundry Bridge | %chttps://herovau.lt/foundrymodule.php?action=importNewPC&userToken="+userToken+"&encodedChar="+pcEncodedJSON,hvColor1,hvColor4);
+    // xmlhttp.open("POST", heroVaultURL+"/foundrymodule.php", true);
+    // xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    // xmlhttp.send('action='+action+'&userToken='+userToken+'&encodedChar='+pcEncodedJSON+'&gamesystem='+gameSystem+'&charUID='+charUID+'&portraitAddress='+encodeURIComponent(portraitAddress)+'&tokenAddress='+encodeURIComponent(tokenAddress));
+  });
+}
 
 function herovaultMenu(targetActor) {
   let importPC = false;
