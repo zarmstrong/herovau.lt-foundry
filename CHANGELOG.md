@@ -1,3 +1,8 @@
+## 0.6.3 (Jul 7, 2021)
+
+* Fixed a bug with saving certain settings
+* Fixed a bug that could occur when importing over an existing character.
+
 ## 0.6.2 (Jul 2, 2021)
 
 * fix cookie/usertoken issues

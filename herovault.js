@@ -53,7 +53,7 @@ Hooks.on("ready", async function () {
   game.settings.register("herovaultfoundry", "debugEnabled", {
     name: "Enable debug mode",
     hint: "Debug output will be written to the js console.",
-    scope: "world",
+    scope: "client",
     config: true,
     type: Boolean,
     default: false,
@@ -63,7 +63,7 @@ Hooks.on("ready", async function () {
   game.settings.register("herovaultfoundry", "skipTokenPrompt", {
     name: "Skip Token Prompt",
     hint: "Once your HeroVau.lt user token is set, you will no longer be prompted to set it. Unchecking this makes HeroVau.lt prompt you for the User Token again.",
-    scope: "world",
+    scope: "client",
     config: true,
     type: Boolean,
     default: false,
@@ -1407,10 +1407,17 @@ async function importCharacter(targetActor, charURL) {
 
         if (hvDebug)
           console.log(
-            "%cHLO Importer | %c Importing " + charImport.name,
+            "%cHeroVau.lt/Foundry Bridge | %cHLO Importer | %c Importing " +
+              charImport.name,
             hvColor1,
+            hvColor5,
             hvColor4
           );
+        const exp = async () => {
+          await targetActor.deleteEmbeddedDocuments("Item", ["123"], {
+            deleteAll: true,
+          });
+        };
         targetActor.importFromJSON(JSON.stringify(charImport));
         var request = new XMLHttpRequest();
 
