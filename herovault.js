@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer = "0.6.3";
+const hvVer = "0.6.4";
 const heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
@@ -1617,7 +1617,7 @@ export function exportToHVFromPBHLO(heroJSON, tAct) {
         return responseJSON.charhash;
       } else {
         ui.notifications.warn(
-          "Unable to export to HeroVau.lt. Please try manually."
+          "Unable to export to HeroVau.lt. Please try manually. ["+responseJSON.error+"]"
         );
       }
     }

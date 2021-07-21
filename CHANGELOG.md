@@ -1,3 +1,7 @@
+## 0.6.4 (Jul 20, 2021)
+
+* added helpful alert message when an export to herovau.lt fails
+
 ## 0.6.3 (Jul 7, 2021)
 
 * Fixed a bug with saving certain settings
