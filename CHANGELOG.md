@@ -1,3 +1,8 @@
+## 0.6.5 (Aug 21, 2021)
+
+* update compatability for 0.8.9
+* introduced compatability with http instead of https (should work with both)
+
 ## 0.6.4 (Jul 20, 2021)
 
 * added helpful alert message when an export to herovau.lt fails

@@ -1,6 +1,6 @@
 let hvDebug = false;
-const hvVer = "0.6.4";
-const heroVaultURL = "https://herovau.lt";
+const hvVer = "0.6.5";
+let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
 const hvColor2 = "color: #d8eb34"; //yellow green
@@ -11,6 +11,14 @@ let HLOuserToken, hvUserToken, skipTokenPrompt;
 let enableHLO = true;
 let enablePB = true;
 let pfsEnabled = true;
+let proto="https"
+if (location.protocol !== "https:") {
+  heroVaultURL = "http://herovau.lt";
+  if (game.user.isGM)
+    ui.notifications.info("GM: Please set your server to use HTTPS. For instructions see (coming soon).");  
+  ui.notifications.info("HeroVau.lt using insecure HTTP mode.");
+}
+
 
 Hooks.on("ready", async function () {
   console.log(
@@ -1154,7 +1162,7 @@ function createPCTable(targetActor, responseJSON) {
       charLevel +
       ") - Last edited @ " +
       edit +
-      ")</option>";
+      "</option>";
   }
   htmlOut = htmlOut + "</select><br>";
   new Dialog(
