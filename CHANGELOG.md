@@ -1,3 +1,7 @@
+## 0.6.6 (Aug 21, 2021)
+
+* fixed issue with isGM
+
 ## 0.6.5 (Aug 21, 2021)
 
 * update compatability for 0.8.9

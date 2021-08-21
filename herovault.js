@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer = "0.6.5";
+const hvVer = "0.6.6";
 let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
@@ -14,9 +14,6 @@ let pfsEnabled = true;
 let proto="https"
 if (location.protocol !== "https:") {
   heroVaultURL = "http://herovau.lt";
-  if (game.user.isGM)
-    ui.notifications.info("GM: Please set your server to use HTTPS. For instructions see (coming soon).");  
-  ui.notifications.info("HeroVau.lt using insecure HTTP mode.");
 }
 
 
@@ -26,6 +23,12 @@ Hooks.on("ready", async function () {
     hvColor1,
     hvColor4
   );
+
+  if (location.protocol !== "https:") {
+    if (game.user.isGM)
+      ui.notifications.info("GM: Please set your server to use HTTPS. For instructions see (coming soon).");  
+    ui.notifications.info("HeroVau.lt using insecure HTTP mode.");
+  }
 
   if (Cookie.get("hvut")) {
     game.settings.set("herovaultfoundry", "userToken", Cookie.get("hvut"));
