@@ -1,3 +1,10 @@
+## 0.6.7 (Sep 18, 2021)
+
+* replaced deprecated things
+* fix bug where resources could be imported as array when obj is required
+* fixed version compat check
+* update some potentially confusing wording
+
 ## 0.6.6 (Aug 21, 2021)
 
 * fixed issue with isGM

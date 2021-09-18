@@ -264,7 +264,7 @@ async function pickAFunction(obj) {
       ...menuButtons,
       pfsimport: {
         icon: "<i class='fas fa-search'></i>",
-        label: `Find a PFS PC`,
+        label: `Find & Import a PFS PC`,
         callback: () => (PFSPC = true),
       },
     };
@@ -496,7 +496,7 @@ function getVaultToken(
   let applyChanges = false;
   if (hvUserToken == null) hvUserToken = "";
   new Dialog({
-    title: `HeroVau.lt Import`,
+    title: `Connect to HeroVau.lt`,
     content: `
       <div>
         <p>Enter your User Token from HeroVau.lt. You can find it on the <a href="https://herovau.lt/?action=myaccount">My Account</a> page on http://herovau.lt</p>
@@ -543,7 +543,7 @@ function getVaultToken(
     buttons: {
       yes: {
         icon: "<i class='fas fa-check'></i>",
-        label: `Load Vault`,
+        label: `Connect to HeroVau.lt`,
         callback: () => (applyChanges = true),
       },
       no: {
@@ -715,10 +715,10 @@ async function performExportToHV(targetActor) {
         hvColor4
       );
     if (freeSlots < 1 && canOverwrite == false) {
-      bdy = `<div><p>Unfortunately you do not have enough open slots in your <a href="https://herovau.lt">HeroVau.lt</a> to import this PC.<br>Please upgrade your account or delete a PC from your account to free up some space.</p><div><hr/>`;
+      bdy = `<div><p>Unfortunately you do not have enough open slots in your <a href="https://herovau.lt">HeroVau.lt</a> to export this PC.<br>Please upgrade your account or delete a PC from your account to free up some space.</p><div><hr/>`;
 
       new Dialog({
-        title: "Import to your HeroVau.lt",
+        title: "Export to your HeroVau.lt",
         content: bdy,
         buttons: {
           yes: {
@@ -740,11 +740,11 @@ async function performExportToHV(targetActor) {
         };
         bdy =
           bdy +
-          `<div><p>You you can import this character as a new PC, taking up a slot on your account. <br><small>(Note: if the same exact copy of this character exists on your account, it will be overwritten)</small></p></div>`;
+          `<div><p>You you can export this character as a new PC, taking up a slot on your account. <br><small>(Note: if the same exact copy of this character exists on your account, it will be overwritten)</small></p></div>`;
       } else {
         bdy =
           bdy +
-          `<div><p>You do not have enough free slots to import this character as a new PC.</p></div>`;
+          `<div><p>You do not have enough free slots to export this character as a new PC.</p></div>`;
       }
       if (canOverwrite) {
         bdy =
@@ -770,7 +770,7 @@ async function performExportToHV(targetActor) {
         bdy +
         `<div><p><img src="${portrait}"><br>Please choose an action to perform:</p><div><hr/>`;
       new Dialog({
-        title: "Import to your HeroVau.lt",
+        title: "Export to your HeroVau.lt",
         content: bdy,
         buttons: menuButtons,
         default: "exportNew",
@@ -1289,6 +1289,7 @@ function requestCharacter(targetActor, charUID) {
 async function importCharacter(targetActor, charURL) {
   let error = false;
   var importPCID, errMsg, charDataStr, charImport;
+  errMsg=""
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -1328,10 +1329,12 @@ async function importCharacter(targetActor, charURL) {
         let pcGameSystemVersion;
         let pcCoreVersion;
         if (
-          responseJSON.flags.exportSource != undefined &&
-          responseJSON.flags.exportSource.systemVersion != undefined &&
-          responseJSON.flags.exportSource.coreVersion != undefined
+          responseJSON.flags.hasOwnProperty("exportSource") &&
+          responseJSON.flags.exportSource.hasOwnProperty("systemVersion") &&
+          responseJSON.flags.exportSource.hasOwnProperty("coreVersion")
         ) {
+          pcCoreVersion=responseJSON.flags.exportSource.coreVersion;
+          pcGameSystemVersion=responseJSON.flags.exportSource.systemVersion;
           if (pcCoreVersion != coreVersion) {
             coreVersionMismatch = true;
             errMsg =
@@ -1383,10 +1386,10 @@ async function importCharacter(targetActor, charURL) {
           if (systemVersionMismatch || coreVersionMismatch) {
             errMsg = errMsg + "There may be compatibility issues.";
             let chatData = {
-              user: game.user._id,
+              user: game.user.data._id,
               speaker: ChatMessage.getSpeaker(),
               content: errMsg,
-              whisper: [game.user._id],
+              whisper: [game.user.data._id],
             };
             ChatMessage.create(chatData, {});
             if (abort) return;
@@ -1415,6 +1418,7 @@ async function importCharacter(targetActor, charURL) {
         }
         if (charImport.token.sightAngle < 1) charImport.token.sightAngle = 360;
         if (charImport.token.lightAngle < 1) charImport.token.lightAngle = 360;
+        charImport.data.resources = {};
 
         if (hvDebug)
           console.log(
