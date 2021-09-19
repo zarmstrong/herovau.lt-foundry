@@ -1419,7 +1419,8 @@ async function importCharacter(targetActor, charURL) {
         if (charImport.token.sightAngle < 1) charImport.token.sightAngle = 360;
         if (charImport.token.lightAngle < 1) charImport.token.lightAngle = 360;
         charImport.data.resources = {};
-
+        let oldPermissions =targetActor.data.permission;
+        charImport.permission = oldPermissions;
         if (hvDebug)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %cHLO Importer | %c Importing " +
@@ -1433,7 +1434,8 @@ async function importCharacter(targetActor, charURL) {
             deleteAll: true,
           });
         };
-        targetActor.importFromJSON(JSON.stringify(charImport));
+        let charJSON = JSON.stringify(charImport)
+        targetActor.importFromJSON(charJSON);
         var request = new XMLHttpRequest();
 
         request.open("GET", charImport.token.img, true);

@@ -1,3 +1,7 @@
+## 0.6.8 (Sep 18, 2021)
+
+* fixed bug where permissions would be wiped upon import
+
 ## 0.6.7 (Sep 18, 2021)
 
 * replaced deprecated things
