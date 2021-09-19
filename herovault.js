@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer = "0.6.7";
+const hvVer = "0.6.8";
 let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
