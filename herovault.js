@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer = "0.6.8";
+const hvVer = "0.6.9";
 let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
@@ -88,6 +88,8 @@ Hooks.on("ready", async function () {
   HLOuserToken = game.settings.get("herovaultfoundry", "hlouserToken");
   hvUserToken = game.settings.get("herovaultfoundry", "userToken");
   skipTokenPrompt = game.settings.get("herovaultfoundry", "skipTokenPrompt");
+  // if (!skipTokenPrompt)
+
 });
 
 Hooks.on("renderActorSheet", function (obj, html) {
@@ -1419,6 +1421,14 @@ async function importCharacter(targetActor, charURL) {
         if (charImport.token.sightAngle < 1) charImport.token.sightAngle = 360;
         if (charImport.token.lightAngle < 1) charImport.token.lightAngle = 360;
         charImport.data.resources = {};
+        if (hvDebug)
+          console.log("%cHeroVau.lt/Foundry Bridge | %cChecking for crafting:"+ responseJSON.data.hasOwnProperty("crafting"),color1,color4)
+        if (!charImport.data.hasOwnProperty("crafting")) {
+          if (hvDebug)
+            console.log("%cHeroVau.lt/Foundry Bridge | %c Adding crafting block to PC",color1,color4);
+          var crafting = { formulas: [] }
+          charImport.data.crafting=crafting
+        }
         let oldPermissions =targetActor.data.permission;
         charImport.permission = oldPermissions;
         if (hvDebug)
@@ -1436,6 +1446,7 @@ async function importCharacter(targetActor, charURL) {
         };
         let charJSON = JSON.stringify(charImport)
         targetActor.importFromJSON(charJSON);
+        targetActor
         var request = new XMLHttpRequest();
 
         request.open("GET", charImport.token.img, true);

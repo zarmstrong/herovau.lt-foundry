@@ -1,3 +1,7 @@
+## 0.6.9 (Oct 10, 2021)
+
+* update compatability for pf2e 2.15.1
+
 ## 0.6.8 (Sep 18, 2021)
 
 * fixed bug where permissions would be wiped upon import

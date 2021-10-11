@@ -3,7 +3,7 @@
   "title": "HeroVau.lt Foundry Integration",
   "description": "This module integrates with the herovau.lt website to easily import and export your PCs between servers. Perfect for Adventure League, Pathfinder Society, Starfinder Society and other organized play systems.",
   "author": "slate",
-  "version": "0.6.8",
+  "version": "0.6.9",
   "minimumCoreVersion": "0.7.9",
   "compatibleCoreVersion": "0.8.9",
   "esmodules": [ 
@@ -11,7 +11,7 @@
     ],
   "url": "https://github.com/zarmstrong/herovau.lt-foundry",
   "manifest": "https://raw.githubusercontent.com/zarmstrong/herovau.lt-foundry/main/module.json",
-  "download": "https://github.com/zarmstrong/herovau.lt-foundry/releases/download/herovau.lt-foundry-0.6.8/herovau.lt-foundry-0.6.8.zip",
+  "download": "https://github.com/zarmstrong/herovau.lt-foundry/releases/download/herovau.lt-foundry-0.6.9/herovau.lt-foundry-0.6.9.zip",
   "license": "MIT",
   "readme": "https://github.com/zarmstrong/herovau.lt-foundry",
   "bugs": "https://github.com/zarmstrong/herovau.lt-foundry/issues",
