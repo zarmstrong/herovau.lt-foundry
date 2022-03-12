@@ -742,7 +742,7 @@ async function performExportToHV(targetActor) {
         };
         bdy =
           bdy +
-          `<div><p>You you can export this character as a new PC, taking up a slot on your account. <br><small>(Note: if the same exact copy of this character exists on your account, it will be overwritten)</small></p></div>`;
+          `<div><p>You can export this character as a new PC, taking up a slot on your account. <br><small>(Note: if the same exact copy of this character exists on your account, it will be overwritten)</small></p></div>`;
       } else {
         bdy =
           bdy +
