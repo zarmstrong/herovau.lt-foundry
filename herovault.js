@@ -927,7 +927,7 @@ const exportPCtoHV = (
     else action = "importExistingPC";
 
     const gameSystem = game.data.system.id;
-    let pcEncodedJSON = encodeURIComponent(JSON.stringify(targetActor.data));
+    let pcEncodedJSON = encodeURIComponent(JSON.stringify(targetActor.toObject()));
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
