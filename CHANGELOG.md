@@ -1,3 +1,8 @@
+## 0.7.0 (Mar 12, 2022)
+
+* fix typo
+* fix exporting of prepared actor data (hopefully this doesn't have a cascading effect)
+
 ## 0.6.9 (Oct 10, 2021)
 
 * update compatability for pf2e 2.15.1
