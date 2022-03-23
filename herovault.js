@@ -1,5 +1,5 @@
 let hvDebug = false;
-const hvVer = "0.7.0";
+const hvVer = "0.7.1";
 let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
@@ -1418,6 +1418,15 @@ async function importCharacter(targetActor, charURL) {
           charImport = responseJSON;
           charImport._id = targetPCID;
         }
+        if (Array.isArray(charImport.data.saves))
+        {
+          if (hvDebug)
+            console.log("%cHeroVau.lt/Foundry Bridge | %cConverting a bad saves array to object.",color1,color4)
+          let oldsaves=charImport.data.saves;
+          var newSaves= Object.assign({},oldsaves);
+          charImport.data.saves=newSaves;
+        }
+
         if (charImport.token.sightAngle < 1) charImport.token.sightAngle = 360;
         if (charImport.token.lightAngle < 1) charImport.token.lightAngle = 360;
         charImport.data.resources = {};
@@ -1445,6 +1454,8 @@ async function importCharacter(targetActor, charURL) {
           });
         };
         let charJSON = JSON.stringify(charImport)
+        if (hvDebug)
+          console.log("%cHeroVau.lt/Foundry Bridge | %cFinal json for import: "+ charJSON,color1,color4)
         targetActor.importFromJSON(charJSON);
         targetActor
         var request = new XMLHttpRequest();
@@ -1651,6 +1662,7 @@ export function exportToHVFromPBHLO(heroJSON, tAct) {
     }
   };
   // console.log("%cHeroVau.lt/Foundry Bridge | %chttps://herovau.lt/foundrymodule.php?action=importNewPC&userToken="+userToken+"&encodedChar="+pcEncodedJSON,hvColor1,hvColor4);
+  // console.log(pcEncodedJSON);
   xmlhttp.open("POST", heroVaultURL + "/foundrymodule.php", true);
   xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   xmlhttp.send(

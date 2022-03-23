@@ -1,3 +1,7 @@
+## 0.7.1 (Mar 23, 2022)
+
+* fix certain imports breaking due to "Cannot set properties of undefined (setting 'rollOptions')"
+
 ## 0.7.0 (Mar 12, 2022)
 
 * fix typo
