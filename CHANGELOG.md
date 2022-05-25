@@ -1,3 +1,7 @@
+## 0.7.2 (May 25, 2022)
+
+* no code change, just updated the module to show compatability with v9
+
 ## 0.7.1 (Mar 23, 2022)
 
 * fix certain imports breaking due to "Cannot set properties of undefined (setting 'rollOptions')"
