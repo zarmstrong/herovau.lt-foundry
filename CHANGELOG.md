@@ -1,3 +1,7 @@
+## 0.10.1 (Sep 22, 2022)
+
+* disable debug mode
+
 ## 0.10.0 (Sep 22, 2022)
 
 * update for foundry v10 and pf2e v4.1.2
