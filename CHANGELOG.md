@@ -1,3 +1,8 @@
+## 0.10.0 (Sep 22, 2022)
+
+* update for foundry v10 and pf2e v4.1.2
+* added tracking of version of system and foundry into json flags
+
 ## 0.7.2 (May 25, 2022)
 
 * no code change, just updated the module to show compatability with v9

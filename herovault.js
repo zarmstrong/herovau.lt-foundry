@@ -1,5 +1,5 @@
-let hvDebug = false;
-const hvVer = "0.7.2";
+const hvDebug = { enabled: true };
+const hvVer = "0.10.0";
 let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
@@ -11,11 +11,10 @@ let HLOuserToken, hvUserToken, skipTokenPrompt;
 let enableHLO = true;
 let enablePB = true;
 let pfsEnabled = true;
-let proto="https"
+let proto = "https";
 if (location.protocol !== "https:") {
   heroVaultURL = "http://herovau.lt";
 }
-
 
 Hooks.on("ready", async function () {
   console.log(
@@ -26,7 +25,9 @@ Hooks.on("ready", async function () {
 
   if (location.protocol !== "https:") {
     if (game.user.isGM)
-      ui.notifications.info("GM: Please set your server to use HTTPS. For instructions see (coming soon).");  
+      ui.notifications.info(
+        "GM: Please set your server to use HTTPS. For instructions see (coming soon)."
+      );
     ui.notifications.info("HeroVau.lt using insecure HTTP mode.");
   }
 
@@ -69,7 +70,7 @@ Hooks.on("ready", async function () {
     type: Boolean,
     default: false,
     onChange: (value) =>
-      (hvDebug = game.settings.get("herovaultfoundry", "debugEnabled")),
+      (hvDebug.enabled = game.settings.get("herovaultfoundry", "debugEnabled")),
   });
   game.settings.register("herovaultfoundry", "skipTokenPrompt", {
     name: "Skip Token Prompt",
@@ -84,45 +85,34 @@ Hooks.on("ready", async function () {
         "skipTokenPrompt"
       )),
   });
-  hvDebug = game.settings.get("herovaultfoundry", "debugEnabled");
+  hvDebug.enabled = game.settings.get("herovaultfoundry", "debugEnabled");
   HLOuserToken = game.settings.get("herovaultfoundry", "hlouserToken");
   hvUserToken = game.settings.get("herovaultfoundry", "userToken");
   skipTokenPrompt = game.settings.get("herovaultfoundry", "skipTokenPrompt");
   // if (!skipTokenPrompt)
-
 });
 
 Hooks.on("renderActorSheet", function (obj, html) {
   const actor = obj.actor;
-  const v8 = HVversionCompare(game.data.version, "0.8.5");
   // Only inject the link if the actor is of type "character" and the user has permission to update it
-  if (hvDebug) {
-    if (v8 == 1)
-      console.log(
-        "%cHeroVau.lt/Foundry Bridge | %cCan user modify: " +
-          actor.canUserModify(game.user, "update"),
-        hvColor1,
-        hvColor4
-      );
-    else
-      console.log(
-        "%cHeroVau.lt/Foundry Bridge | %cActor type: " +
-          actor.data.type +
-          "can update?: " +
-          actor.can(game.user, "update"),
-        hvColor1,
-        hvColor4
-      );
+  if (hvDebug.enabled) {
+    console.log(
+      "%cHeroVau.lt/Foundry Bridge | %cActor type: " +
+        actor.type +
+        "can update?: " +
+        actor.testUserPermission(game.user, "update"),
+      hvColor1,
+      hvColor4
+    );
   }
 
-  if (!(actor.data.type === "character")) return;
-
-  if (v8 == 1) {
-    if (actor.canUserModify(game.user, "update") == false) return;
-  } else {
-    if (!(actor.data.type === "character" && actor.can(game.user, "update")))
-      return;
-  }
+  if (
+    !(
+      actor.type === "character" &&
+      actor.testUserPermission(game.user, "update")
+    )
+  )
+    return;
 
   let element = html.find(".window-header .window-title");
   if (element.length != 1) return;
@@ -132,7 +122,7 @@ Hooks.on("renderActorSheet", function (obj, html) {
     let vaultButton = $(
       `<a class="popout" id="herovault"><i class="fas fa-cloud"></i>Vault</a>`
     );
-    vaultButton.on("click", () => checkNextAction(obj.object));
+    vaultButton.on("click", () => checkNextAction(actor));
     element.after(vaultButton);
   }
   if (game.modules.get("pathbuilder2e-import")?.active && enablePB) {
@@ -149,7 +139,7 @@ function checkUserToken(token) {
   xmlhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       let responseJSON = JSON.parse(this.responseText);
-      if (hvDebug)
+      if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %ccheckUserToken: " +
             JSON.stringify(responseJSON),
@@ -171,7 +161,7 @@ function checkUserToken(token) {
       }
     }
   };
-  if (hvDebug)
+  if (hvDebug.enabled)
     console.log(
       "%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=iv&userToken=" +
         token,
@@ -189,7 +179,7 @@ function checkUserToken(token) {
 function checkNextAction(obj) {
   if (!game.modules.get("herovaultfoundry")?.active) {
     if (skipTokenPrompt) {
-      if (hvDebug)
+      if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %cCalling herovaultmenu",
           hvColor1,
@@ -426,7 +416,7 @@ function pfsDialogue(obj) {
       if (searchPFS) {
         pfsnumber = html.find('[id="pfsnumber"]')[0].value;
         pfscharnumber = html.find('[id="pfscharnumber"]')[0].value;
-        if (hvDebug)
+        if (hvDebug.enabled)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %cSearching for " +
               pfsnumber +
@@ -447,14 +437,14 @@ function findPFS(obj, pfsnumber, pfscharnumber) {
   xmlhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       let responseJSON = JSON.parse(this.responseText);
-      if (hvDebug)
+      if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %c" + JSON.stringify(responseJSON),
           hvColor1,
           hvColor4
         );
       if (Object.keys(responseJSON).length >= 1) {
-        if (hvDebug)
+        if (hvDebug.enabled)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %cCalling createPCTable",
             hvColor1,
@@ -467,7 +457,7 @@ function findPFS(obj, pfsnumber, pfscharnumber) {
       }
     }
   };
-  if (hvDebug)
+  if (hvDebug.enabled)
     console.log(
       "%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=findPFS&pfsnumber=" +
         pfsnumber +
@@ -577,7 +567,7 @@ async function exportToHV(targetActor) {
     xmlhttp.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
         let responseJSON = JSON.parse(this.responseText);
-        if (hvDebug)
+        if (hvDebug.enabled)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %c" + JSON.stringify(responseJSON),
             hvColor1,
@@ -596,7 +586,7 @@ async function exportToHV(targetActor) {
         }
       }
     };
-    if (hvDebug)
+    if (hvDebug.enabled)
       console.log(
         "%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=iv&userToken=" +
           hvUserToken,
@@ -626,29 +616,33 @@ async function performExportToHV(targetActor) {
     hvUserToken = game.settings.get("herovaultfoundry", "userToken");
     portrait = "icons/svg/mystery-man.svg";
     if (
-      targetActor.data.img != undefined &&
-      targetActor.data.token.img != undefined
+      targetActor.img != undefined &&
+      targetActor.prototypeToken.texture.src != undefined
     ) {
-      if (targetActor.data.img.includes("mystery-man") == -1) {
-        portrait = targetActor.data.img;
-      } else if (targetActor.data.token.img.includes("mystery-man") == -1) {
-        portrait = targetActor.data.token.img;
+      if (targetActor.img.includes("mystery-man") == -1) {
+        portrait = targetActor.img;
+      } else if (
+        targetActor.prototypeToken.texture.src.includes("mystery-man") == -1
+      ) {
+        portrait = targetActor.prototypeToken.texture.src;
       } else {
-        portrait = targetActor.data.img;
+        portrait = targetActor.img;
       }
-      if (hvDebug)
+      if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %cportrait includes: " +
-            targetActor.data.img.includes("http"),
+            targetActor.img.includes("http"),
           hvColor1,
           hvColor4
         );
-      if (targetActor.data.img.includes("http") == false) {
-        portraitAddress =
-          game.data.addresses.remote + targetActor.data.img.trim();
+      if (
+        targetActor.img.includes("http") == false &&
+        targetActor.img.includes("cdn.herovau.lt") == false
+      ) {
+        portraitAddress = game.data.addresses.remote + targetActor.img.trim();
         // await targetActor.update({'data.img': portraitAddress});
-        // targetActor.data.img=portraitAddress;
-        if (hvDebug) {
+        // targetActor.img=portraitAddress;
+        if (hvDebug.enabled) {
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %c target: " + targetActor,
             hvColor1,
@@ -661,18 +655,25 @@ async function performExportToHV(targetActor) {
           );
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %csheet portrait: " +
-              targetActor.data.img,
+              targetActor.img,
             hvColor1,
             hvColor4
           );
         }
       }
-      if (targetActor.data.token.img.includes("http") == false) {
+      if (
+        targetActor.prototypeToken.texture.src.includes("http") == false &&
+        targetActor.prototypeToken.texture.src.includes("cdn.herovau.lt") ==
+          false
+      ) {
         tokenAddress =
-          game.data.addresses.remote + targetActor.data.token.img.trim();
-        await targetActor.update({ "data.token.img": tokenAddress });
-        // targetActor.data.token.img=tokenAddress;
-        if (hvDebug) {
+          game.data.addresses.remote +
+          targetActor.prototypeToken.texture.src.trim();
+        await targetActor.update({
+          "prototypeToken.texture.src": tokenAddress,
+        });
+        // targetActor.prototypeToken.texture.src=tokenAddress;
+        if (hvDebug.enabled) {
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %ctoken: " + tokenAddress,
             hvColor1,
@@ -680,7 +681,7 @@ async function performExportToHV(targetActor) {
           );
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %csheet token: " +
-              targetActor.data.token.img,
+              targetActor.prototypeToken.texture.src,
             hvColor1,
             hvColor4
           );
@@ -688,15 +689,20 @@ async function performExportToHV(targetActor) {
       }
     }
 
-    if (hasProperty(targetActor, "data.flags.herovault.uid")) {
+    if ("targetActor?.data?.flags?.herovault?.uid") {
       hvUID = targetActor.data.flags.herovault.uid;
+      let accChk = await checkForAccess(hvUserToken, hvUID);
+      canOverwrite = accChk.canAccess;
+    }
+    if ("targetActor?.flags?.herovault?.uid") {
+      hvUID = targetActor.flags.herovault.uid;
       let accChk = await checkForAccess(hvUserToken, hvUID);
       canOverwrite = accChk.canAccess;
       // Promise.resolve(checkForAccess(hvUserToken,hvUID)).then( res => canOverwrite=res);
     }
     vaultInfo = await getVaultSlots(hvUserToken);
     // Promise.resolve(getVaultSlots(userToken)).then( res => vaultInfo=res);
-    if (hvDebug)
+    if (hvDebug.enabled)
       console.log(
         "%cHeroVau.lt/Foundry Bridge | %cvaultInfo: " +
           JSON.stringify(vaultInfo),
@@ -709,7 +715,7 @@ async function performExportToHV(targetActor) {
     let freeSlots = totalSlots - usedSlots;
     let bdy = `<div><p>You have ${freeSlots}/${totalSlots} character slots free.</p><div><hr/>`;
 
-    if (hvDebug)
+    if (hvDebug.enabled)
       console.log(
         "%cHeroVau.lt/Foundry Bridge | %ccan access/overwrite?: " +
           canOverwrite,
@@ -798,7 +804,7 @@ async function performExportToHV(targetActor) {
               ui.notifications.info(exportStatus.message);
             }
           } else if (exportOverwritePC) {
-            if (hvDebug) console.log("export overwrite PC");
+            if (hvDebug.enabled) console.log("export overwrite PC");
             let exportStatus = await exportPCtoHV(
               targetActor,
               hvUserToken,
@@ -832,7 +838,7 @@ const checkForAccess = async (hvUserToken, hvUID) => {
     xmlhttp.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
         let responseJSON = JSON.parse(this.responseText);
-        if (hvDebug)
+        if (hvDebug.enabled)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %c" + JSON.stringify(responseJSON),
             hvColor1,
@@ -845,7 +851,7 @@ const checkForAccess = async (hvUserToken, hvUID) => {
         }
       }
     };
-    if (hvDebug) {
+    if (hvDebug.enabled) {
       console.log(
         "%cHeroVau.lt/Foundry Bridge | %cChecking if this account can access: " +
           hvUID,
@@ -881,7 +887,7 @@ const getVaultSlots = async (hvUserToken) => {
     xmlhttp.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
         let responseJSON = JSON.parse(this.responseText);
-        if (hvDebug)
+        if (hvDebug.enabled)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %c" + JSON.stringify(responseJSON),
             hvColor1,
@@ -894,7 +900,7 @@ const getVaultSlots = async (hvUserToken) => {
         }
       }
     };
-    if (hvDebug)
+    if (hvDebug.enabled)
       console.log(
         "%cHeroVau.lt/Foundry Bridge | %chttps://herovau.lt/foundrymodule.php?action=getVaultSlots&userToken=" +
           hvUserToken,
@@ -926,14 +932,18 @@ const exportPCtoHV = (
     if (importAsNew) action = "importNewPC";
     else action = "importExistingPC";
 
-    const gameSystem = game.data.system.id;
-    let pcEncodedJSON = encodeURIComponent(JSON.stringify(targetActor.toObject()));
+    const gameSystem = game.system.id;
+    const gameSystemVersion = game.system.version;
+    const foundryVersion = game.version;
+    let pcEncodedJSON = encodeURIComponent(
+      JSON.stringify(targetActor.toObject())
+    );
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
         let responseJSON = JSON.parse(this.responseText);
         console.log(responseJSON);
-        if (hvDebug)
+        if (hvDebug.enabled)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %c" + JSON.stringify(responseJSON),
             hvColor1,
@@ -962,7 +972,11 @@ const exportPCtoHV = (
         "&portraitAddress=" +
         encodeURIComponent(portraitAddress) +
         "&tokenAddress=" +
-        encodeURIComponent(tokenAddress)
+        encodeURIComponent(tokenAddress) +
+        "&foundryVersion=" +
+        encodeURIComponent(foundryVersion) +
+        "&gameSystemVersion=" +
+        encodeURIComponent(gameSystemVersion)
     );
   });
 };
@@ -1006,10 +1020,10 @@ function herovaultMenu(targetActor) {
       default: "yes",
       close: (html) => {
         if (importPC) {
-          if (hvDebug) console.log("import PC menu");
+          if (hvDebug.enabled) console.log("import PC menu");
           loadPersonalVault(targetActor, hvUserToken);
         } else if (exportPC) {
-          if (hvDebug) console.log("export PC");
+          if (hvDebug.enabled) console.log("export PC");
           exportToHV(targetActor, hvUserToken);
         }
       },
@@ -1025,7 +1039,7 @@ function exportPC(targetActor) {
 
 function beginVaultConnection(targetActor) {
   if (skipTokenPrompt) {
-    if (hvDebug)
+    if (hvDebug.enabled)
       console.log(
         "%cHeroVau.lt/Foundry Bridge | %cCalling herovaultMenu in beginVaultConnection",
         hvColor1,
@@ -1039,27 +1053,27 @@ function beginVaultConnection(targetActor) {
 }
 
 function loadPersonalVault(targetActor) {
-  const gameSystem = game.data.system.id;
+  const gameSystem = game.system.id;
   let error = false;
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       let responseJSON = JSON.parse(this.responseText);
-      if (hvDebug)
+      if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %c" + responseJSON,
           hvColor1,
           hvColor4
         );
       if (responseJSON.hasOwnProperty("error")) {
-        if (hvDebug)
+        if (hvDebug.enabled)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %cerror found in response",
             hvColor1,
             hvColor4
           );
         error = true;
-      } else if (hvDebug)
+      } else if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %c" + Object.keys(responseJSON).length,
           hvColor1,
@@ -1084,7 +1098,7 @@ function loadPersonalVault(targetActor) {
         }).render(true);
       } else {
         if (Object.keys(responseJSON).length >= 1) {
-          if (hvDebug)
+          if (hvDebug.enabled)
             console.log(
               "%cHeroVau.lt/Foundry Bridge | %cCalling checkHLOCharacterIsCorrect",
               hvColor1,
@@ -1105,7 +1119,7 @@ function loadPersonalVault(targetActor) {
       // console.log("%cHeroVau.lt/Foundry Bridge | %creadyState: "+this.readyState,hvColor1,hvColor4)
     }
   };
-  if (hvDebug)
+  if (hvDebug.enabled)
     console.log(
       "%cHeroVau.lt/Foundry Bridge | %cusertoken: " + hvUserToken,
       hvColor1,
@@ -1138,7 +1152,7 @@ function createPCTable(targetActor, responseJSON) {
     width: 650,
     height: "auto",
   };
-  if (hvDebug)
+  if (hvDebug.enabled)
     console.log(
       "%cHeroVau.lt/Foundry Bridge | %cin createPCTable",
       hvColor1,
@@ -1194,12 +1208,13 @@ function createPCTable(targetActor, responseJSON) {
       default: "yes",
       close: (html) => {
         if (pickedCharacter) {
-          if (hvDebug) console.log("yes clicked");
+          if (hvDebug.enabled) console.log("yes clicked");
           selectedCharUID = html.find('[id="pcid"]')[0].value;
-          if (hvDebug) console.log("Selected PC id: " + selectedCharUID);
+          if (hvDebug.enabled)
+            console.log("Selected PC id: " + selectedCharUID);
           requestCharacter(targetActor, selectedCharUID);
         } else {
-          if (hvDebug) console.log("cancel clicked");
+          if (hvDebug.enabled) console.log("cancel clicked");
         }
       },
     },
@@ -1213,21 +1228,21 @@ function requestCharacter(targetActor, charUID) {
   xmlhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       let responseJSON = JSON.parse(this.responseText);
-      if (hvDebug)
+      if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %c" + responseJSON,
           hvColor1,
           hvColor4
         );
       if (responseJSON.hasOwnProperty("error")) {
-        if (hvDebug)
+        if (hvDebug.enabled)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %cerror found in response",
             hvColor1,
             hvColor4
           );
         error = true;
-      } else if (hvDebug)
+      } else if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %c" + Object.keys(responseJSON).length,
           hvColor1,
@@ -1253,7 +1268,7 @@ function requestCharacter(targetActor, charUID) {
         }).render(true);
       } else {
         if (responseJSON.downloadURL) {
-          if (hvDebug)
+          if (hvDebug.enabled)
             console.log(
               "%cHeroVau.lt/Foundry Bridge | %cGot the URL: " +
                 responseJSON.downloadURL,
@@ -1272,7 +1287,7 @@ function requestCharacter(targetActor, charUID) {
       // console.log("%cHeroVau.lt/Foundry Bridge | %creadyState: "+this.readyState,hvColor1,hvColor4)
     }
   };
-  if (hvDebug)
+  if (hvDebug.enabled)
     console.log(
       "%cHeroVau.lt/Foundry Bridge | %ccharUID: " + charUID,
       hvColor1,
@@ -1291,12 +1306,12 @@ function requestCharacter(targetActor, charUID) {
 async function importCharacter(targetActor, charURL) {
   let error = false;
   var importPCID, errMsg, charDataStr, charImport;
-  errMsg=""
+  errMsg = "";
   var xmlhttp = new XMLHttpRequest();
-  xmlhttp.onreadystatechange = function () {
+  xmlhttp.onreadystatechange = async function () {
     if (this.readyState == 4 && this.status == 200) {
       let responseJSON = JSON.parse(this.responseText);
-      if (hvDebug)
+      if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %c" + JSON.stringify(responseJSON),
           hvColor1,
@@ -1322,85 +1337,120 @@ async function importCharacter(targetActor, charURL) {
       } else {
         // responseJSON
         // console.log("%cHeroVau.lt/Foundry Bridge | Import ID:%c"+responseJSON._id,hvColor1,hvColor4);
-        let targetPCID = targetActor.data._id;
+        let targetPCID = targetActor._id;
         let coreVersionMismatch = false;
         let systemVersionMismatch = false;
         let abort = false;
-        let systemVersion = game.system.data.version;
-        let coreVersion = game.data.version;
+        let systemVersion = game.system.version;
+        let coreVersion = game.version;
         let pcGameSystemVersion;
         let pcCoreVersion;
         if (
-          responseJSON.flags.hasOwnProperty("exportSource") &&
-          responseJSON.flags.exportSource.hasOwnProperty("systemVersion") &&
-          responseJSON.flags.exportSource.hasOwnProperty("coreVersion")
+          responseJSON?.flags?.herovault?.gameSystemVersion &&
+          responseJSON?.flags?.herovault?.foundryVersion
         ) {
-          pcCoreVersion=responseJSON.flags.exportSource.coreVersion;
-          pcGameSystemVersion=responseJSON.flags.exportSource.systemVersion;
-          if (pcCoreVersion != coreVersion) {
-            coreVersionMismatch = true;
+          pcCoreVersion = responseJSON.flags.herovault.foundryVersion;
+          pcGameSystemVersion = responseJSON.flags.herovault.gameSystemVersion;
+        } else if (
+          responseJSON.flags?.exportSource?.systemVersion &&
+          responseJSON.flags?.exportSource?.coreVersion
+        ) {
+          pcCoreVersion = responseJSON.flags.exportSource.coreVersion;
+          pcGameSystemVersion = responseJSON.flags.exportSource.systemVersion;
+        }
+
+        if (pcCoreVersion != coreVersion) {
+          coreVersionMismatch = true;
+          errMsg =
+            errMsg +
+            "This PC was exported from Foundry v" +
+            pcCoreVersion +
+            " and this game server is running Foundry v" +
+            coreVersion +
+            ".<br><br>";
+        }
+        if (pcGameSystemVersion != systemVersion) {
+          systemVersionMismatch = true;
+          if (HVversionCompare(pcGameSystemVersion, systemVersion) == 1) {
+            //game system is older than PC, this could be bad!
+            abort = true;
             errMsg =
               errMsg +
-              "This PC was exported from Foundry v" +
-              pcCoreVersion +
-              " and this game server is running Foundry v" +
-              coreVersion +
+              "This PC was exported from " +
+              game.system.title +
+              ": " +
+              pcGameSystemVersion +
+              " and this game server is running " +
+              game.system.title +
+              ": " +
+              systemVersion +
+              ".<br><br>Unfortunately, game systems usually are not backwards compatible, so we areaborting this import. To manually override, please download the hero export from herovau.lt. <br><strong>This may break this PC -- you  have been warned!</strong><br><br>You can also attempt to import your PC into Foundry v9 and re-export to HeroVau.lt here: https://slate-pf2-dev.forge-vtt.com/game";
+          } else
+            errMsg =
+              errMsg +
+              "This PC was exported from " +
+              game.system.title +
+              ": " +
+              pcGameSystemVersion +
+              " and this game server is running " +
+              game.system.title +
+              ": " +
+              systemVersion +
               ".<br><br>";
-          }
-          if (pcGameSystemVersion != systemVersion) {
-            systemVersionMismatch = true;
-            if (HVversionCompare(pcGameSystemVersion, systemVersion) == 1) {
-              //game system is older than PC, this could be bad!
-              abort = true;
-              errMsg =
-                errMsg +
-                "This PC was exported from " +
-                game.system.data.title +
-                ": " +
-                pcGameSystemVersion +
-                " and this game server is running " +
-                game.system.data.title +
-                ": " +
-                systemVersion +
-                ".<br><br>Unfortunately, game systems usually are not backwards compatible, so we are aborting this import. To manually override, please download the hero export from herovau.lt. <br><strong>This may break this PC -- you  have been warned!</strong><br><br>";
-            } else
-              errMsg =
-                errMsg +
-                "This PC was exported from " +
-                game.system.data.title +
-                ": " +
-                pcGameSystemVersion +
-                " and this game server is running " +
-                game.system.data.title +
-                ": " +
-                systemVersion +
-                ".<br><br>";
-          }
-          if (hvDebug)
+        }
+        /*        if (pcGameSystemVersion.split(".")[0]<3) {
+          if (hvDebug.enabled)
             console.log(
-              "%cHeroVau.lt/Foundry Bridge | Mismatch?:%c" +
-                systemVersionMismatch +
-                " | " +
-                coreVersionMismatch,
+              "%cHeroVau.lt/Foundry Bridge | Character too old, can't import. %c" +
+                pcGameSystemVersion.split(".")[0],
               hvColor1,
               hvColor4
             );
-          if (systemVersionMismatch || coreVersionMismatch) {
-            errMsg = errMsg + "There may be compatibility issues.";
-            let chatData = {
-              user: game.user.data._id,
-              speaker: ChatMessage.getSpeaker(),
-              content: errMsg,
-              whisper: [game.user.data._id],
-            };
-            ChatMessage.create(chatData, {});
-            if (abort) return;
-          }
+            errMsg =
+              "This PC was exported from " +
+              game.system.title +
+              ": " +
+              pcGameSystemVersion +
+              " which is unfortunately too old to be imported to  " +
+              game.system.title +
+              ": " +
+              systemVersion +
+              ".<br><br>Canceling import.<br><br>";
+          let chatData = {
+            user: game.user._id,
+            speaker: ChatMessage.getSpeaker(),
+            content: errMsg,
+            whisper: [game.user._id],
+          };
+          ChatMessage.create(chatData, {});
+          return;
         }
+        */
+        if (hvDebug.enabled)
+          console.log(
+            "%cHeroVau.lt/Foundry Bridge | Mismatch?:%c" +
+              systemVersionMismatch +
+              " | " +
+              coreVersionMismatch,
+            hvColor1,
+            hvColor4
+          );
+        if (systemVersionMismatch || coreVersionMismatch) {
+          errMsg = errMsg + "There may be compatibility issues.";
+          let chatData = {
+            user: game.user._id,
+            speaker: ChatMessage.getSpeaker(),
+            content: errMsg,
+            whisper: [game.user._id],
+          };
+          ChatMessage.create(chatData, {});
+          if (abort) return;
+        }
+
         if (responseJSON._id) {
           importPCID = new RegExp(responseJSON._id, "g");
           charDataStr = JSON.stringify(responseJSON);
-          if (hvDebug) {
+          if (hvDebug.enabled) {
             console.log(
               "%cHeroVau.lt/Foundry Bridge | Target ID:%c" + targetPCID,
               hvColor1,
@@ -1418,29 +1468,39 @@ async function importCharacter(targetActor, charURL) {
           charImport = responseJSON;
           charImport._id = targetPCID;
         }
-        if (Array.isArray(charImport.data.saves))
-        {
-          if (hvDebug)
-            console.log("%cHeroVau.lt/Foundry Bridge | %cConverting a bad saves array to object.",color1,color4)
-          let oldsaves=charImport.data.saves;
-          var newSaves= Object.assign({},oldsaves);
-          charImport.data.saves=newSaves;
+        if (charImport?.data?.saves && Array.isArray(charImport.data.saves)) {
+          if (hvDebug.enabled)
+            console.log(
+              "%cHeroVau.lt/Foundry Bridge | %cConverting a bad saves array to object.",
+              hvColor1,
+              hvColor4
+            );
+          let oldsaves = charImport.data.saves;
+          var newSaves = Object.assign({}, oldsaves);
+          charImport.data.saves = newSaves;
         }
 
-        if (charImport.token.sightAngle < 1) charImport.token.sightAngle = 360;
-        if (charImport.token.lightAngle < 1) charImport.token.lightAngle = 360;
-        charImport.data.resources = {};
-        if (hvDebug)
-          console.log("%cHeroVau.lt/Foundry Bridge | %cChecking for crafting:"+ responseJSON.data.hasOwnProperty("crafting"),color1,color4)
-        if (!charImport.data.hasOwnProperty("crafting")) {
-          if (hvDebug)
-            console.log("%cHeroVau.lt/Foundry Bridge | %c Adding crafting block to PC",color1,color4);
-          var crafting = { formulas: [] }
-          charImport.data.crafting=crafting
+        if (hvDebug.enabled)
+          console.log(
+            "%cHeroVau.lt/Foundry Bridge | %cChecking for crafting:" +
+              responseJSON?.data?.crafting,
+            hvColor1,
+            hvColor4
+          );
+        if (charImport?.data && !charImport?.data?.crafting) {
+          if (hvDebug.enabled)
+            console.log(
+              "%cHeroVau.lt/Foundry Bridge | %c Adding crafting block to PC",
+              hvColor1,
+              hvColor4
+            );
+          var crafting = { formulas: [] };
+          charImport.data.crafting = crafting;
         }
-        let oldPermissions =targetActor.data.permission;
+
+        let oldPermissions = targetActor.permission;
         charImport.permission = oldPermissions;
-        if (hvDebug)
+        if (hvDebug.enabled)
           console.log(
             "%cHeroVau.lt/Foundry Bridge | %cHLO Importer | %c Importing " +
               charImport.name,
@@ -1448,32 +1508,74 @@ async function importCharacter(targetActor, charURL) {
             hvColor5,
             hvColor4
           );
-        const exp = async () => {
-          await targetActor.deleteEmbeddedDocuments("Item", ["123"], {
-            deleteAll: true,
-          });
-        };
-        let charJSON = JSON.stringify(charImport)
-        if (hvDebug)
-          console.log("%cHeroVau.lt/Foundry Bridge | %cFinal json for import: "+ charJSON,color1,color4)
-        targetActor.importFromJSON(charJSON);
-        targetActor
-        var request = new XMLHttpRequest();
 
-        request.open("GET", charImport.token.img, true);
-        request.onreadystatechange = function () {
-          if (this.status === 404) {
-            targetActor.update({
-              "data.token.img": "icons/svg/mystery-man.svg",
-            });
-          }
-        };
-        request.send();
+        let targetid = targetActor._id;
+        targetActor = Actor.get(targetid);
+
+        // let promise = await new Promise(resolve => { targetActor.deleteEmbeddedDocuments("Item", [], {
+        //     deleteAll: true,
+        //   });
+        // });
+        charImport = await removeDarkvision(charImport);
+        charImport = await fixOldSlugs(charImport);
+        //charImport = await checkForStaleData(charImport);
+        // let p=charImport;
+
+        let charJSON = JSON.stringify(charImport);
+        if (hvDebug.enabled)
+          console.log(
+            "%cHeroVau.lt/Foundry Bridge | %cFinal json for import: " +
+              charJSON,
+            hvColor1,
+            hvColor4
+          );
+
+        let promise = await doImport(targetActor, charJSON);
+
+        var request = new XMLHttpRequest();
+        if (charImport?.prototypeToken?.texture?.src !== undefined) {
+          if (hvDebug.enabled)
+            console.log(
+              "%cHeroVau.lt/Foundry Bridge | %cFetching token image " +
+                charImport.prototypeToken.texture.src,
+              hvColor1,
+              hvColor4
+            );
+          request.open("GET", charImport.prototypeToken.texture.src, true);
+          request.onreadystatechange = function () {
+            if (this.status === 404) {
+              targetActor.update({
+                "prototypeToken.texture.src": "icons/svg/mystery-man.svg",
+              });
+              if (hvDebug.enabled)
+                console.log(
+                  "%cHeroVau.lt/Foundry Bridge | %c404 fetching image " +
+                    charImport.prototypeToken.texture.src,
+                  hvColor1,
+                  hvColor4
+                );
+            }
+          };
+          request.send();
+        }
+
         var request2 = new XMLHttpRequest();
+        if (hvDebug.enabled)
+          console.log(
+            "%cHeroVau.lt/Foundry Bridge | %cFetching image " + charImport.src,
+            hvColor1,
+            hvColor4
+          );
         request2.open("GET", charImport.img, true);
         request2.onreadystatechange = function () {
           if (this.status === 404) {
-            if (hvDebug) console.log("got a 404");
+            if (hvDebug.enabled)
+              console.log(
+                "%cHeroVau.lt/Foundry Bridge | %c404 fetching image " +
+                  charImport.img,
+                hvColor1,
+                hvColor4
+              );
             targetActor.update({ img: "icons/svg/mystery-man.svg" });
           }
         };
@@ -1486,6 +1588,133 @@ async function importCharacter(targetActor, charURL) {
   // console.log("%cHeroVau.lt/Foundry Bridge | %cDownloading PC from: " + charURL,hvColor1,hvColor4);
   xmlhttp.open("GET", charURL, true);
   xmlhttp.send();
+}
+
+async function doImport(obj, json) {
+  return obj.importFromJSON(json);
+}
+
+async function removeDarkvision(charJSON) {
+  if (charJSON?.flags?.exportSource?.system == "pf2e") {
+    for (const property in charJSON.items) {
+      if (charJSON.items[property]?.data?.slug == "darkvision")
+        charJSON.items.splice(property, 1);
+    }
+  }
+  return charJSON;
+}
+
+async function fixOldSlugs(charJSON) {
+  charJSON = Object.assign({}, charJSON);
+  if (charJSON?.flags?.exportSource?.system == "pf2e") {
+    let newItems = [];
+    for (const property in charJSON.items) {
+      if (charJSON.items[property]?.flags?.core?.sourceId) {
+        let itemSource =
+          charJSON.items[property].flags.core.sourceId.split(".");
+        // console.log(itemSource[0]+"."+itemSource[1]+"."+itemSource[2])
+        if (itemSource[2] == "equipment-srd") {
+          let pack = game.packs.get(itemSource[1] + "." + itemSource[2]);
+          let itemData = Object.assign(
+            {},
+            await pack.getDocument(itemSource[3])
+          );
+          // if charJSON.items[property]?.data?.slug == "holy-water"
+          // console.log(itemData)
+          if (itemData) {
+            // console.log("before and after:")
+            // console.log(charJSON.items[property]);
+            let oldItemData = Object.assign({}, charJSON.items[property]);
+            if (oldItemData?.data?.slug && itemData?.system?.slug) {
+              oldItemData.data.slug = itemData.system.slug;
+              // console.log(oldItemData);
+              charJSON.items.push(itemData);
+              charJSON.items.splice(property, 1);
+            }
+          }
+        }
+      }
+    }
+  }
+  return charJSON;
+}
+
+async function checkForStaleData(charJSON) {
+  charJSON = Object.assign({}, charJSON);
+  if (charJSON?.flags?.exportSource?.system == "pf2e") {
+    let newItems = [];
+    for (const property in charJSON.items) {
+      //console.log(`${property}: ${charJSON.items[property]} | `+ charJSON.items[property].name);
+
+      if (charJSON.items[property]?.flags?.core?.sourceId) {
+        let itemSource =
+          charJSON.items[property].flags.core.sourceId.split(".");
+        console.log(itemSource[0] + "." + itemSource[1] + "." + itemSource[2]);
+
+        if (
+          itemSource[2] != "equipment-srd" &&
+          itemSource[2] != "pathfinder-society-boons"
+        ) {
+          // let pack = game.packs.get(itemSource[1]+"."+itemSource[2]);
+          // let itemData = Object.assign({},await pack.getDocument(itemSource[3]));
+          // //console.log(itemData)
+          // if (itemData?._stats) {
+          //   itemData.id=charJSON.items[property].id
+          //   itemData._stats.systemId="pf2e"
+          //   itemData._stats.systemVersion=game.system.version
+          //   itemData._stats.coreVersion=game.version
+          //   itemData._stats.createdTime=Math.floor(Date.now() / 1000)
+          //   itemData._stats.modifiedTime=Math.floor(Date.now() / 1000)
+          //   itemData._stats.lastModifiedBy=game.userId
+          // }
+          // charJSON.items.push(itemData);
+          // charJSON.items.splice(property,1);
+          if (charJSON.items[property]?._stats) {
+            charJSON.items[property]._stats.systemId = "pf2e";
+            charJSON.items[property]._stats.systemVersion = game.system.version;
+            charJSON.items[property]._stats.coreVersion = game.version;
+            charJSON.items[property]._stats.createdTime = Math.floor(
+              Date.now() / 1000
+            );
+            charJSON.items[property]._stats.modifiedTime = Math.floor(
+              Date.now() / 1000
+            );
+            charJSON.items[property]._stats.lastModifiedBy = game.userId;
+          }
+        }
+        // else if (itemSource[2] == "equipment-srd") {
+        //   let pack = game.packs.get(itemSource[1]+"."+itemSource[2]);
+        //   let itemData = Object.assign({},await pack.getDocument(itemSource[3]));
+        //   //console.log(itemData)
+        //   if (!charJSON.items[property]?.data?.baseItem || charJSON.items[property]?.data?.baseItem  == null) {
+        //     console.log("baseItem missing or null! see this:")
+        //     console.log(charJSON.items[property])
+        //     let itemData = Object.assign({},charJSON.items[property]);
+        //     itemData.data.baseItem="tootsieroll"
+        //     if (itemData?._stats) {
+        //       itemData.id=charJSON.items[property].id
+        //       itemData._stats.systemId="pf2e"
+        //       itemData._stats.systemVersion=game.system.version
+        //       itemData._stats.coreVersion=game.version
+        //       itemData._stats.createdTime=Math.floor(Date.now() / 1000)
+        //       itemData._stats.modifiedTime=Math.floor(Date.now() / 1000)
+        //       itemData._stats.lastModifiedBy=game.userId
+        //     }
+        //     charJSON.items.push(itemData);
+        //     charJSON.items.splice(property,1);
+        //   } else {
+        //     console.log("has baseItem : " + charJSON.items[property].data.baseItem)
+        //   }
+        // }
+      } else {
+        console.log("No sourceId, skipping");
+      }
+    }
+  }
+  console.log("modified charJSON");
+  console.log(charJSON);
+
+  return charJSON;
 }
 
 var Cookie = {
@@ -1621,7 +1850,7 @@ function getHash(encodedHeroJSON) {
   xmlhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       let responseJSON = JSON.parse(this.responseText);
-      if (hvDebug)
+      if (hvDebug.enabled)
         console.log(
           "%cHeroVau.lt/Foundry Bridge | %c" + JSON.stringify(responseJSON),
           hvColor1,
@@ -1640,7 +1869,7 @@ export function exportToHVFromPBHLO(heroJSON, tAct) {
   let error = false;
   let action = "importNewPCFromPBHLO";
   var xmlhttp = new XMLHttpRequest();
-  const gameSystem = game.data.system.id;
+  const gameSystem = game.system.id;
 
   let pcEncodedJSON = encodeURIComponent(heroJSON);
   let newHash = getHash(pcEncodedJSON);
@@ -1656,7 +1885,9 @@ export function exportToHVFromPBHLO(heroJSON, tAct) {
         return responseJSON.charhash;
       } else {
         ui.notifications.warn(
-          "Unable to export to HeroVau.lt. Please try manually. ["+responseJSON.error+"]"
+          "Unable to export to HeroVau.lt. Please try manually. [" +
+            responseJSON.error +
+            "]"
         );
       }
     }
