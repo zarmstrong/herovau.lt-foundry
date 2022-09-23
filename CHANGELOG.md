@@ -1,3 +1,7 @@
+## 0.10.2 (Sep 23, 2022)
+
+* fix bad version number in manifest
+
 ## 0.10.1 (Sep 22, 2022)
 
 * disable debug mode
