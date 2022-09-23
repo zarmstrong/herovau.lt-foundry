@@ -1,5 +1,5 @@
 const hvDebug = { enabled: false };
-const hvVer = "0.10.2";
+const hvVer = "0.10.3";
 let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
@@ -51,7 +51,7 @@ Hooks.on("ready", async function () {
     config: true,
     type: String,
     default: hvUserToken,
-    // onChange: value =>  ( )
+    onChange: value =>  ( hvUserToken = game.settings.get("herovaultfoundry", "userToken") )
   });
   game.settings.register("herovaultfoundry", "hlouserToken", {
     name: "HeroLab Online User Token (optional)",
@@ -134,7 +134,7 @@ function setHLOToken() {
   HLOuserToken = game.settings.get("herovaultfoundry", "hlouserToken");
 }
 
-function checkUserToken(token) {
+async function checkUserToken(token) {
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -161,19 +161,26 @@ function checkUserToken(token) {
       }
     }
   };
+  var hashedToken = await getSHA(token);
   if (hvDebug.enabled)
     console.log(
       "%cHeroVau.lt/Foundry Bridge | %c/foundrymodule.php?action=iv&userToken=" +
-        token,
+        hashedToken,
       hvColor1,
       hvColor4
     );
   xmlhttp.open(
-    "GET",
-    heroVaultURL + "/foundrymodule.php?action=iv&userToken=" + token,
+    "POST",
+    heroVaultURL + "/foundrymodule.php",
     true
   );
-  xmlhttp.send();
+  xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xmlhttp.send(
+    "action=iv" +
+      "&userToken=" +
+      hvUserToken
+  );
+
 }
 
 function checkNextAction(obj) {
@@ -431,7 +438,7 @@ function pfsDialogue(obj) {
   }).render(true);
 }
 
-function findPFS(obj, pfsnumber, pfscharnumber) {
+async function findPFS(obj, pfsnumber, pfscharnumber) {
   var hvUserToken = game.settings.get("herovaultfoundry", "userToken");
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function () {
@@ -467,15 +474,20 @@ function findPFS(obj, pfsnumber, pfscharnumber) {
       hvColor4
     );
   xmlhttp.open(
-    "GET",
+    "POST",
     heroVaultURL +
-      "/foundrymodule.php?action=findPFS&pfsnumber=" +
-      pfsnumber +
-      "&pfscharnumber=" +
-      pfscharnumber,
+      "/foundrymodule.php",
     true
   );
-  xmlhttp.send();
+  xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xmlhttp.send(
+    "action=findPFS" +
+      action +
+      "&pfsnumber=" +
+      pfsnumber +
+      "&pfscharnumber=" +
+      pfscharnumber
+  );
 }
 
 function getVaultToken(
@@ -594,11 +606,19 @@ async function exportToHV(targetActor) {
         hvColor4
       );
     xmlhttp.open(
-      "GET",
-      heroVaultURL + "/foundrymodule.php?action=iv&userToken=" + hvUserToken,
+      "POST",
+      heroVaultURL + "/foundrymodule.php",
       true
     );
-    xmlhttp.send();
+    xmlhttp.setRequestHeader(
+          "Content-type",
+          "application/x-www-form-urlencoded"
+        );
+    xmlhttp.send(
+      "action=iv" +
+        "&userToken=" +
+        hvUserToken 
+    );
   } catch (e) {
     console.log(e);
   }
@@ -614,6 +634,7 @@ async function performExportToHV(targetActor) {
     let portrait, hvUID, portraitAddress, tokenAddress;
 
     hvUserToken = game.settings.get("herovaultfoundry", "userToken");
+    var hvUserTokenHashed=await getSHA(hvUserToken);
     portrait = "icons/svg/mystery-man.svg";
     if (
       targetActor.img != undefined &&
@@ -689,16 +710,16 @@ async function performExportToHV(targetActor) {
       }
     }
 
-    if ("targetActor?.data?.flags?.herovault?.uid") {
-      hvUID = targetActor.data.flags.herovault.uid;
-      let accChk = await checkForAccess(hvUserToken, hvUID);
-      canOverwrite = accChk.canAccess;
-    }
-    if ("targetActor?.flags?.herovault?.uid") {
+    if (targetActor?.flags?.herovault?.uid ) {
+      console.log(targetActor.flags)
       hvUID = targetActor.flags.herovault.uid;
       let accChk = await checkForAccess(hvUserToken, hvUID);
       canOverwrite = accChk.canAccess;
       // Promise.resolve(checkForAccess(hvUserToken,hvUID)).then( res => canOverwrite=res);
+    } else if (targetActor?.data?.flags?.herovault?.uid) {
+      hvUID = targetActor.data.flags.herovault.uid;
+      let accChk = await checkForAccess(hvUserToken, hvUID);
+      canOverwrite = accChk.canAccess;
     }
     vaultInfo = await getVaultSlots(hvUserToken);
     // Promise.resolve(getVaultSlots(userToken)).then( res => vaultInfo=res);
@@ -807,7 +828,7 @@ async function performExportToHV(targetActor) {
             if (hvDebug.enabled) console.log("export overwrite PC");
             let exportStatus = await exportPCtoHV(
               targetActor,
-              hvUserToken,
+              hvUserTokenHashed,
               hvUID,
               false,
               portraitAddress,
@@ -868,15 +889,22 @@ const checkForAccess = async (hvUserToken, hvUID) => {
       );
     }
     xmlhttp.open(
-      "GET",
+      "POST",
       heroVaultURL +
-        "/foundrymodule.php?action=checkCharacter&userToken=" +
-        hvUserToken +
-        "&charUID=" +
-        hvUID,
+        "/foundrymodule.php",
       true
     );
-    xmlhttp.send();
+    xmlhttp.setRequestHeader(
+      "Content-type",
+      "application/x-www-form-urlencoded"
+    );
+    xmlhttp.send(
+      "action=checkCharacter" +
+        "&userToken=" +
+        hvUserToken + 
+        "&charUID=" +
+        hvUID
+    );
   });
 };
 
@@ -908,13 +936,20 @@ const getVaultSlots = async (hvUserToken) => {
         hvColor4
       );
     xmlhttp.open(
-      "GET",
+      "POST",
       heroVaultURL +
-        "/foundrymodule.php?action=getVaultSlots&userToken=" +
-        hvUserToken,
+        "/foundrymodule.php",
       true
     );
-    xmlhttp.send();
+    xmlhttp.setRequestHeader(
+      "Content-type",
+      "application/x-www-form-urlencoded"
+    );
+    xmlhttp.send(
+      "action=getVaultSlots" +
+        "&userToken=" +
+        hvUserToken 
+    );
   });
 };
 
@@ -1126,17 +1161,24 @@ function loadPersonalVault(targetActor) {
       hvColor4
     );
   xmlhttp.open(
-    "GET",
+    "POST",
     heroVaultURL +
-      "/foundrymodule.php?action=getvault&gamesystem=" +
+      "/foundrymodule.php",
+    true
+  );
+  xmlhttp.setRequestHeader(
+    "Content-type",
+    "application/x-www-form-urlencoded"
+  );
+  xmlhttp.send(
+    "action=getvault" +
+      "&gamesystem=" +
       encodeURIComponent(gameSystem) +
       "&hvVer=" +
       hvVer +
       "&userToken=" +
-      encodeURIComponent(hvUserToken),
-    true
+      hvUserToken
   );
-  xmlhttp.send();
 }
 
 function createPCTable(targetActor, responseJSON) {
@@ -1294,13 +1336,20 @@ function requestCharacter(targetActor, charUID) {
       hvColor4
     );
   xmlhttp.open(
-    "GET",
+    "POST",
     heroVaultURL +
-      "/foundrymodule.php?action=getCharacter&charUID=" +
-      encodeURIComponent(charUID),
+      "/foundrymodule.php",
     true
   );
-  xmlhttp.send();
+  xmlhttp.setRequestHeader(
+    "Content-type",
+    "application/x-www-form-urlencoded"
+  );
+  xmlhttp.send(
+    "action=getCharacter" +
+      "&charUID=" +
+      encodeURIComponent(charUID)
+  );
 }
 
 async function importCharacter(targetActor, charURL) {
@@ -1384,7 +1433,7 @@ async function importCharacter(targetActor, charURL) {
               game.system.title +
               ": " +
               systemVersion +
-              ".<br><br>Unfortunately, game systems usually are not backwards compatible, so we areaborting this import. To manually override, please download the hero export from herovau.lt. <br><strong>This may break this PC -- you  have been warned!</strong><br><br>You can also attempt to import your PC into Foundry v9 and re-export to HeroVau.lt here: https://slate-pf2-dev.forge-vtt.com/game";
+              ".<br><br>Unfortunately, game systems usually are not backwards compatible, so we areaborting this import. To manually override, please download the hero export from herovau.lt. <br><strong>This may break this PC -- you  have been warned!</strong><br><br>If the actor won't open, it is corrupted and should be deleted. If this PC fails to import or corrupts the actor it was imported to, you should attempt to import your PC into Foundry v9 and re-export to HeroVau.lt here: https://slate-pf2-dev.forge-vtt.com/game<br>Once that procedure is complete, come back to this game and retry importing from HeroVau.lt again.";
           } else
             errMsg =
               errMsg +
@@ -1436,7 +1485,7 @@ async function importCharacter(targetActor, charURL) {
             hvColor4
           );
         if (systemVersionMismatch || coreVersionMismatch) {
-          errMsg = errMsg + "There may be compatibility issues.";
+          errMsg = errMsg + "There may be compatibility issues.<br><br>If the actor won't open, it is corrupted and should be deleted. If this PC fails to import or corrupts the actor it was imported to, you should attempt to import your PC into Foundry v9 and re-export to HeroVau.lt here: https://slate-pf2-dev.forge-vtt.com/game<br>Once that procedure is complete, come back to this game and retry importing from HeroVau.lt again.<br><br>";
           let chatData = {
             user: game.user._id,
             speaker: ChatMessage.getSpeaker(),
@@ -1915,6 +1964,18 @@ export function supportCheck() {
   if (hvUserToken) {
     return true;
   }
+}
+
+async function getSHA(message) {
+  // encode as UTF-8
+  const msgBuffer = new TextEncoder().encode(message);                    
+  // hash the message
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  // convert ArrayBuffer to Array
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  // convert bytes to hex string                  
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
 }
 
 Hooks.on("init", () => {

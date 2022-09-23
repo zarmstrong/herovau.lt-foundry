@@ -1,3 +1,10 @@
+## 0.10.3 (Sep 23, 2022)
+
+* fix issue when changing user token
+* changed some gets to posts
+* fixed export issue due to typo
+* expanded some error messages to have more info on next steps
+
 ## 0.10.2 (Sep 23, 2022)
 
 * fix bad version number in manifest
