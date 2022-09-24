@@ -18,6 +18,7 @@
     "verified": "10.286",
     "maximum": "10"
   },
+  "compatibleCoreVersion": "10",
   "relationship": {
     "systems": [
       {
