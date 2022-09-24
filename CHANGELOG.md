@@ -1,3 +1,7 @@
+## 0.10.5 (Sep 24, 2022)
+
+* fixed a message appearing when it shouldn't
+
 ## 0.10.4 (Sep 24, 2022)
 
 * add versioning to herovau.lt calls

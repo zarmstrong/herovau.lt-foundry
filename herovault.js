@@ -1,5 +1,5 @@
 const hvDebug = { enabled: false };
-const hvVer = "0.10.4";
+const hvVer = "0.10.5";
 let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
@@ -1057,7 +1057,8 @@ const exportPCtoHV = (
                     hvColor1,
                     hvColor4
                   );
-                ui.notifications.info("Successfully exported portrait image HeroVau.lt.");
+                if (responseJSON.status == "OK")
+                  ui.notifications.info("Successfully exported portrait image HeroVau.lt.");
                 resolve(responseJSON);
               }
             };
@@ -1091,7 +1092,8 @@ const exportPCtoHV = (
                     hvColor1,
                     hvColor4
                   );
-                ui.notifications.info("Successfully exported token image HeroVau.lt.");
+                if (responseJSON.status == "OK")
+                  ui.notifications.info("Successfully exported token image HeroVau.lt.");
                 resolve(responseJSON);
               }
             };
