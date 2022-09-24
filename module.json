@@ -15,7 +15,8 @@
   "version": "0.10.5",
   "compatibility": {
     "minimum": "10.286",
-    "verified": "10.286"
+    "verified": "10.286",
+    "maximum": "10"
   },
   "relationship": {
     "systems": [
