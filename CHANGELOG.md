@@ -1,3 +1,8 @@
+## 0.10.4 (Sep 24, 2022)
+
+* add versioning to herovau.lt calls
+* change the way portrait/token images are added to herovau.lt -- should now work 100% of the time in basically any environment.
+
 ## 0.10.3 (Sep 23, 2022)
 
 * fix issue when changing user token

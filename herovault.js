@@ -1,5 +1,5 @@
 const hvDebug = { enabled: false };
-const hvVer = "0.10.3";
+const hvVer = "0.10.4";
 let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
@@ -178,7 +178,9 @@ async function checkUserToken(token) {
   xmlhttp.send(
     "action=iv" +
       "&userToken=" +
-      hvUserToken
+      hvUserToken +
+      "&hvVer=" + 
+      encodeURIComponent(hvVer)
   );
 
 }
@@ -486,7 +488,9 @@ async function findPFS(obj, pfsnumber, pfscharnumber) {
       "&pfsnumber=" +
       pfsnumber +
       "&pfscharnumber=" +
-      pfscharnumber
+      pfscharnumber +
+      "&hvVer=" + 
+      encodeURIComponent(hvVer)
   );
 }
 
@@ -617,11 +621,38 @@ async function exportToHV(targetActor) {
     xmlhttp.send(
       "action=iv" +
         "&userToken=" +
-        hvUserToken 
+        hvUserToken  +
+        "&hvVer=" + 
+        encodeURIComponent(hvVer)
     );
   } catch (e) {
     console.log(e);
   }
+}
+
+async function toDataURL(src, callback, outputFormat) {
+  var img = new Image();
+  img.crossOrigin = 'Anonymous';
+  img.onload = function() {
+    var canvas = document.createElement('CANVAS');
+    var ctx = canvas.getContext('2d');
+    var dataURL;
+    canvas.height = this.naturalHeight;
+    canvas.width = this.naturalWidth;
+    ctx.drawImage(this, 0, 0);
+    dataURL = canvas.toDataURL(outputFormat);
+    callback(dataURL);
+  };
+  img.src = src;
+  if (img.complete || img.complete === undefined) {
+    img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+    img.src = src;
+  }
+}
+
+function returnImage(img) {
+  console.log("I got img: "+img)
+  return img;
 }
 
 async function performExportToHV(targetActor) {
@@ -632,9 +663,11 @@ async function performExportToHV(targetActor) {
     let vaultInfo = false;
     let canOverwrite = false;
     let portrait, hvUID, portraitAddress, tokenAddress;
+    //let portrait, token;
 
     hvUserToken = game.settings.get("herovaultfoundry", "userToken");
     var hvUserTokenHashed=await getSHA(hvUserToken);
+
     portrait = "icons/svg/mystery-man.svg";
     if (
       targetActor.img != undefined &&
@@ -656,11 +689,12 @@ async function performExportToHV(targetActor) {
           hvColor1,
           hvColor4
         );
-      if (
-        targetActor.img.includes("http") == false &&
-        targetActor.img.includes("cdn.herovau.lt") == false
-      ) {
-        portraitAddress = game.data.addresses.remote + targetActor.img.trim();
+      // if (
+      //   targetActor.img.includes("http") == false &&
+      //   targetActor.img.includes("cdn.herovau.lt") == false
+      // ) {
+        // portraitAddress = game.data.addresses.remote + targetActor.img.trim();
+        portraitAddress = targetActor.img.trim();
         // await targetActor.update({'data.img': portraitAddress});
         // targetActor.img=portraitAddress;
         if (hvDebug.enabled) {
@@ -681,18 +715,19 @@ async function performExportToHV(targetActor) {
             hvColor4
           );
         }
-      }
-      if (
-        targetActor.prototypeToken.texture.src.includes("http") == false &&
-        targetActor.prototypeToken.texture.src.includes("cdn.herovau.lt") ==
-          false
-      ) {
-        tokenAddress =
-          game.data.addresses.remote +
-          targetActor.prototypeToken.texture.src.trim();
-        await targetActor.update({
-          "prototypeToken.texture.src": tokenAddress,
-        });
+      //}
+      // if (
+      //   targetActor.prototypeToken.texture.src.includes("http") == false &&
+      //   targetActor.prototypeToken.texture.src.includes("cdn.herovau.lt") ==
+      //     false
+      // ) {
+        // tokenAddress =
+        //   game.data.addresses.remote +
+        //   targetActor.prototypeToken.texture.src.trim();
+        tokenAddress =targetActor.prototypeToken.texture.src.trim();
+        // await targetActor.update({
+        //   "prototypeToken.texture.src": tokenAddress,
+        // });
         // targetActor.prototypeToken.texture.src=tokenAddress;
         if (hvDebug.enabled) {
           console.log(
@@ -707,7 +742,27 @@ async function performExportToHV(targetActor) {
             hvColor4
           );
         }
-      }
+      // } else if (targetActor.prototypeToken.texture.src.includes("http"))
+      // {
+      //   tokenAddress = targetActor.prototypeToken.texture.src.trim();
+      //   await targetActor.update({
+      //     "prototypeToken.texture.src": tokenAddress,
+      //   });
+      //   // targetActor.prototypeToken.texture.src=tokenAddress;
+      //   if (hvDebug.enabled) {
+      //     console.log(
+      //       "%cHeroVau.lt/Foundry Bridge | %ctoken: " + tokenAddress,
+      //       hvColor1,
+      //       hvColor4
+      //     );
+      //     console.log(
+      //       "%cHeroVau.lt/Foundry Bridge | %csheet token: " +
+      //         targetActor.prototypeToken.texture.src,
+      //       hvColor1,
+      //       hvColor4
+      //     );
+      //   }        
+      // }
     }
 
     if (targetActor?.flags?.herovault?.uid ) {
@@ -903,7 +958,10 @@ const checkForAccess = async (hvUserToken, hvUID) => {
         "&userToken=" +
         hvUserToken + 
         "&charUID=" +
-        hvUID
+        hvUID +
+        "&hvVer=" + 
+        encodeURIComponent(hvVer)
+
     );
   });
 };
@@ -948,7 +1006,9 @@ const getVaultSlots = async (hvUserToken) => {
     xmlhttp.send(
       "action=getVaultSlots" +
         "&userToken=" +
-        hvUserToken 
+        hvUserToken  +
+        "&hvVer=" + 
+        encodeURIComponent(hvVer)
     );
   });
 };
@@ -984,6 +1044,75 @@ const exportPCtoHV = (
             hvColor1,
             hvColor4
           );
+          charUID = responseJSON.charhash;
+          toDataURL(targetActor.img, function(dataUrl) {
+            var xmlhttpPortrait = new XMLHttpRequest();
+            xmlhttpPortrait.onreadystatechange = function () {
+              if (this.readyState == 4 && this.status == 200) {
+                let responseJSON = JSON.parse(this.responseText);
+                console.log(responseJSON);
+                if (hvDebug.enabled)
+                  console.log(
+                    "%cHeroVau.lt/Foundry Bridge | %cPortrait Upload:" + JSON.stringify(responseJSON),
+                    hvColor1,
+                    hvColor4
+                  );
+                ui.notifications.info("Successfully exported portrait image HeroVau.lt.");
+                resolve(responseJSON);
+              }
+            };
+            xmlhttpPortrait.open("POST", heroVaultURL + "/foundrymodule.php", true);
+            xmlhttpPortrait.setRequestHeader(
+              "Content-type",
+              "application/x-www-form-urlencoded"
+            );
+            xmlhttpPortrait.send(
+              "action=portraitSend" +
+                "&userToken=" +
+                userToken +
+                "&charUID=" +
+                charUID +
+                "&portraitBase64=" +
+                encodeURIComponent(dataUrl) + 
+                "&hvVer=" + 
+                encodeURIComponent(hvVer)
+            );    
+          },'image/png');
+
+          toDataURL(targetActor.prototypeToken.texture.src, function(dataUrl) {
+            var xmlhttpToken = new XMLHttpRequest();
+            xmlhttpToken.onreadystatechange = function () {
+              if (this.readyState == 4 && this.status == 200) {
+                let responseJSON = JSON.parse(this.responseText);
+                console.log(responseJSON);
+                if (hvDebug.enabled)
+                  console.log(
+                    "%cHeroVau.lt/Foundry Bridge | %cToken Upload:" + JSON.stringify(responseJSON),
+                    hvColor1,
+                    hvColor4
+                  );
+                ui.notifications.info("Successfully exported token image HeroVau.lt.");
+                resolve(responseJSON);
+              }
+            };
+            xmlhttpToken.open("POST", heroVaultURL + "/foundrymodule.php", true);
+            xmlhttpToken.setRequestHeader(
+              "Content-type",
+              "application/x-www-form-urlencoded"
+            );
+            xmlhttpToken.send(
+              "action=tokenSend" +
+                "&userToken=" +
+                userToken +
+                "&charUID=" +
+                charUID +
+                "&tokenBase64=" +
+                encodeURIComponent(dataUrl) +
+                "&hvVer=" + 
+                encodeURIComponent(hvVer)
+            );
+          });
+
         resolve(responseJSON);
       }
     };
@@ -1004,14 +1133,12 @@ const exportPCtoHV = (
         gameSystem +
         "&charUID=" +
         charUID +
-        "&portraitAddress=" +
-        encodeURIComponent(portraitAddress) +
-        "&tokenAddress=" +
-        encodeURIComponent(tokenAddress) +
         "&foundryVersion=" +
         encodeURIComponent(foundryVersion) +
         "&gameSystemVersion=" +
-        encodeURIComponent(gameSystemVersion)
+        encodeURIComponent(gameSystemVersion) +
+                "&hvVer=" + 
+                encodeURIComponent(hvVer)
     );
   });
 };
@@ -1177,7 +1304,9 @@ function loadPersonalVault(targetActor) {
       "&hvVer=" +
       hvVer +
       "&userToken=" +
-      hvUserToken
+      hvUserToken +
+      "&hvVer=" + 
+      encodeURIComponent(hvVer)
   );
 }
 
@@ -1348,7 +1477,10 @@ function requestCharacter(targetActor, charUID) {
   xmlhttp.send(
     "action=getCharacter" +
       "&charUID=" +
-      encodeURIComponent(charUID)
+      encodeURIComponent(charUID) +
+      "&hvVer=" + 
+      encodeURIComponent(hvVer)
+
   );
 }
 
@@ -1911,7 +2043,9 @@ function getHash(encodedHeroJSON) {
   };
   xmlhttp.open("POST", heroVaultURL + "/foundrymodule.php", true);
   xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-  xmlhttp.send("action=genHash&encodedChar=" + encodedHeroJSON);
+  xmlhttp.send("action=genHash&encodedChar=" + encodedHeroJSON +
+                "&hvVer=" + 
+                encodeURIComponent(hvVer));
 }
 
 export function exportToHVFromPBHLO(heroJSON, tAct) {
@@ -1955,7 +2089,9 @@ export function exportToHVFromPBHLO(heroJSON, tAct) {
       "&gamesystem=" +
       gameSystem +
       "&charUID=" +
-      newHash
+      newHash +
+      "&hvVer=" + 
+      encodeURIComponent(hvVer)
   );
 }
 

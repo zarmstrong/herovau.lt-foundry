@@ -12,7 +12,7 @@
       "ko-fi": "SLATE"
     }
   ],
-  "version": "0.10.3",
+  "version": "0.10.4",
   "compatibility": {
     "minimum": "10.286",
     "verified": "10.286"
@@ -37,7 +37,7 @@
   "packs": [],
   "url": "https://github.com/zarmstrong/herovau.lt-foundry",
   "manifest": "https://raw.githubusercontent.com/zarmstrong/herovau.lt-foundry/main/module.json",
-  "download": "https://github.com/zarmstrong/herovau.lt-foundry/releases/download/herovau.lt-foundry-0.10.3/herovau.lt-foundry-0.10.3.zip",
+  "download": "https://github.com/zarmstrong/herovau.lt-foundry/releases/download/herovau.lt-foundry-0.10.4/herovau.lt-foundry-0.10.4.zip",
   "license": "MIT",
   "readme": "https://github.com/zarmstrong/herovau.lt-foundry",
   "bugs": "https://github.com/zarmstrong/herovau.lt-foundry/issues",
