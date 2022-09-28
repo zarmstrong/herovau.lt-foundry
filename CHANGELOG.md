@@ -1,3 +1,7 @@
+## 0.10.7 (Sep 27, 2022)
+
+* minor fix for bug introduced in 0.10.6
+
 ## 0.10.6 (Sep 27, 2022)
 
 * fixed a bug that could cause settings to not appear

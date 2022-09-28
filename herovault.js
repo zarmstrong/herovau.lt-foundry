@@ -1,5 +1,5 @@
 const hvDebug = { enabled: false };
-const hvVer = "0.10.6";
+const hvVer = "0.10.7";
 let heroVaultURL = "https://herovau.lt";
 
 const hvColor1 = "color: #7bf542"; //bright green
@@ -50,7 +50,7 @@ Hooks.on("ready", async function () {
     scope: "client",
     config: true,
     type: String,
-    default: ( hvUserToken.length > 0 ? hvUserToken : ""),
+    default: ( ((typeof hvUserToken !== 'undefined') && (hvUserToken.length > 0) ) ? hvUserToken : ""),
     onChange: value =>  ( hvUserToken = game.settings.get("herovaultfoundry", "userToken") )
   });
   game.settings.register("herovaultfoundry", "hlouserToken", {
