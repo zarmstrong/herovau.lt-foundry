@@ -1,3 +1,7 @@
+## 0.11.0 (Mar 6, 2024)
+
+* Initial update for foundry vtt v11
+
 ## 0.10.7 (Sep 27, 2022)
 
 * minor fix for bug introduced in 0.10.6
